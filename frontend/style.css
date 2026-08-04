@@ -1,0 +1,178 @@
+*{
+    box-sizing:border-box;
+    font-family: Arial, sans-serif;
+}
+
+
+body{
+
+    margin:0;
+    background:#f4f7f2;
+    color:#333;
+
+}
+
+
+.container{
+
+    height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+
+}
+
+
+.card{
+
+    background:white;
+    width:380px;
+    padding:40px;
+    border-radius:20px;
+    box-shadow:0 10px 30px rgba(0,0,0,0.1);
+    text-align:center;
+
+}
+
+
+h1{
+
+    color:#4d8b55;
+    font-size:35px;
+
+}
+
+
+.subtitle{
+
+    color:#777;
+
+}
+
+
+input{
+
+    width:100%;
+    padding:14px;
+    margin:10px 0;
+    border-radius:10px;
+    border:1px solid #ddd;
+
+}
+
+
+
+button{
+
+    width:100%;
+    padding:14px;
+    background:#4d8b55;
+    color:white;
+    border:none;
+    border-radius:10px;
+    cursor:pointer;
+    font-size:16px;
+
+}
+
+
+button:hover{
+
+    background:#3c7043;
+
+}
+
+
+a{
+
+    color:#4d8b55;
+
+}
+
+
+/* Dashboard */
+
+
+nav{
+
+    background:white;
+    padding:20px 50px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+
+}
+
+
+nav a{
+
+    margin-left:25px;
+    text-decoration:none;
+
+}
+
+
+.dashboard{
+
+    padding:40px;
+
+}
+
+
+.cards{
+
+    display:flex;
+    gap:20px;
+
+}
+
+
+.dashboard-card{
+
+    background:white;
+    padding:25px;
+    border-radius:20px;
+    flex:1;
+    box-shadow:0 5px 15px rgba(0,0,0,0.08);
+
+}
+
+
+.number{
+
+    font-size:40px;
+    color:#4d8b55;
+
+}
+
+
+
+.section{
+
+    background:white;
+    padding:25px;
+    margin-top:30px;
+    border-radius:20px;
+
+}
+
+
+.food{
+
+    display:flex;
+    justify-content:space-between;
+    padding:15px;
+    background:#f4f7f2;
+    border-radius:10px;
+    margin:10px 0;
+
+}
+
+
+.recipe{
+
+    background:#edf7ed;
+    padding:20px;
+    border-radius:15px;
+
+}
