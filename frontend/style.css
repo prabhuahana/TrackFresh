@@ -1,178 +1,345 @@
 *{
-    box-sizing:border-box;
-    font-family: Arial, sans-serif;
+
+box-sizing:border-box;
+
+font-family:Arial, sans-serif;
+
 }
 
 
 body{
 
-    margin:0;
-    background:#f4f7f2;
-    color:#333;
+margin:0;
 
-}
+background:#f7f5ef;
 
-
-.container{
-
-    height:100vh;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-
-}
-
-
-.card{
-
-    background:white;
-    width:380px;
-    padding:40px;
-    border-radius:20px;
-    box-shadow:0 10px 30px rgba(0,0,0,0.1);
-    text-align:center;
-
-}
-
-
-h1{
-
-    color:#4d8b55;
-    font-size:35px;
-
-}
-
-
-.subtitle{
-
-    color:#777;
-
-}
-
-
-input{
-
-    width:100%;
-    padding:14px;
-    margin:10px 0;
-    border-radius:10px;
-    border:1px solid #ddd;
+color:#333;
 
 }
 
 
 
-button{
+/* LAYOUT */
 
-    width:100%;
-    padding:14px;
-    background:#4d8b55;
-    color:white;
-    border:none;
-    border-radius:10px;
-    cursor:pointer;
-    font-size:16px;
+
+.layout{
+
+display:flex;
+
+min-height:100vh;
 
 }
 
 
-button:hover{
 
-    background:#3c7043;
+
+/* SIDEBAR */
+
+
+aside{
+
+width:230px;
+
+background:#ffffff;
+
+padding:35px 25px;
+
+border-right:1px solid #ddd;
 
 }
 
 
-a{
 
-    color:#4d8b55;
+aside h1{
+
+font-size:24px;
+
+font-weight:600;
+
+color:#425a42;
+
+margin-bottom:50px;
 
 }
 
-
-/* Dashboard */
 
 
 nav{
 
-    background:white;
-    padding:20px 50px;
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
+display:flex;
+
+flex-direction:column;
+
+gap:20px;
 
 }
+
 
 
 nav a{
 
-    margin-left:25px;
-    text-decoration:none;
+text-decoration:none;
 
-}
+color:#555;
 
-
-.dashboard{
-
-    padding:40px;
-
-}
-
-
-.cards{
-
-    display:flex;
-    gap:20px;
-
-}
-
-
-.dashboard-card{
-
-    background:white;
-    padding:25px;
-    border-radius:20px;
-    flex:1;
-    box-shadow:0 5px 15px rgba(0,0,0,0.08);
-
-}
-
-
-.number{
-
-    font-size:40px;
-    color:#4d8b55;
+font-size:16px;
 
 }
 
 
 
-.section{
+nav a:hover{
 
-    background:white;
-    padding:25px;
-    margin-top:30px;
-    border-radius:20px;
+color:#425a42;
 
 }
+
+
+
+
+
+/* MAIN */
+
+
+main{
+
+flex:1;
+
+padding:45px;
+
+max-width:1000px;
+
+}
+
+
+
+header h2{
+
+font-size:38px;
+
+font-weight:500;
+
+margin-bottom:10px;
+
+}
+
+
+
+header p{
+
+color:#777;
+
+}
+
+
+
+
+
+/* SECTIONS */
+
+
+section{
+
+background:white;
+
+margin-top:35px;
+
+padding:30px;
+
+border:1px solid #e3e0d8;
+
+}
+
+
+
+section h3{
+
+font-size:20px;
+
+font-weight:500;
+
+margin-top:0;
+
+}
+
+
+
+
+
+/* FOOD LIST */
 
 
 .food{
 
-    display:flex;
-    justify-content:space-between;
-    padding:15px;
-    background:#f4f7f2;
-    border-radius:10px;
-    margin:10px 0;
+display:flex;
+
+justify-content:space-between;
+
+padding:18px 0;
+
+border-bottom:1px solid #eee;
 
 }
 
 
-.recipe{
 
-    background:#edf7ed;
-    padding:20px;
-    border-radius:15px;
+.food:last-child{
+
+border:none;
+
+}
+
+
+
+
+
+/* PANTRY */
+
+
+.shelf{
+
+display:grid;
+
+grid-template-columns:repeat(3,1fr);
+
+gap:15px;
+
+}
+
+
+
+.item{
+
+background:#f5f3ed;
+
+padding:25px;
+
+border:1px solid #ddd;
+
+}
+
+
+
+.item span{
+
+display:block;
+
+margin-top:10px;
+
+color:#888;
+
+font-size:14px;
+
+}
+
+
+
+
+
+/* RECIPE */
+
+
+.recipe-panel{
+
+background:#f4f6ee;
+
+}
+
+
+
+
+
+@media(max-width:800px){
+
+
+.layout{
+
+flex-direction:column;
+
+}
+
+
+aside{
+
+width:100%;
+
+}
+
+
+.shelf{
+
+grid-template-columns:1fr;
+
+}
+
+
+}
+input{
+
+width:100%;
+
+max-width:400px;
+
+padding:14px;
+
+margin:8px 0;
+
+border:1px solid #ddd;
+
+font-size:15px;
+
+}
+
+
+section button{
+
+background:#425a42;
+
+color:white;
+
+border:none;
+
+padding:12px 25px;
+
+cursor:pointer;
+
+margin-top:15px;
+
+}
+
+
+section button:hover{
+
+background:#354835;
+
+}
+
+
+#foodList .food{
+
+display:flex;
+
+justify-content:space-between;
+
+align-items:center;
+
+padding:18px 0;
+
+border-bottom:1px solid #eee;
+
+}
+
+
+#foodList button{
+
+background:#b05b45;
+
+color:white;
+
+border:none;
+
+padding:8px 15px;
+
+cursor:pointer;
 
 }

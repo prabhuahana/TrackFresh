@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<title>FreshTrack Inventory</title>
+
+<link rel="stylesheet" href="style.css">
+
+</head>
+
+
+<body>
+
+
+<div class="layout">
+
+
+<aside>
+
+<h1>FreshTrack</h1>
+
+
+<nav>
+
+<a href="dashboard.html">Home</a>
+
+<a href="inventory.html">Inventory</a>
+
+<a href="#">Recipes</a>
+
+<a href="#">Shopping List</a>
+
+</nav>
+
+
+</aside>
+
+
+
+
+
+<main>
+
+
+<header>
+
+<h2>Inventory</h2>
+
+<p>
+Add and manage the food currently in your kitchen.
+</p>
+
+</header>
+
+
+
+
+
+
+<section>
+
+
+<h3>Add Food</h3>
+
+
+
+<input 
+id="foodName" 
+placeholder="Food name"
+>
+
+
+
+
+<input 
+id="expiryDate" 
+type="date"
+>
+
+
+
+
+
+<div class="quantity-row">
+
+
+<input 
+id="quantity" 
+type="number"
+placeholder="Amount"
+>
+
+
+
+<select id="unit">
+
+
+<option value="g">
+grams (g)
+</option>
+
+
+<option value="kg">
+kilograms (kg)
+</option>
+
+
+<option value="ml">
+millilitres (mL)
+</option>
+
+
+<option value="L">
+litres (L)
+</option>
+
+
+<option value="pieces">
+pieces
+</option>
+
+
+
+</select>
+
+
+</div>
+
+
+
+
+
+<button onclick="addFood()">
+
+Add Item
+
+</button>
+
+
+
+</section>
+
+
+
+
+
+
+
+<section>
+
+
+<h3>Your Food</h3>
+
+
+
+<div id="foodList">
+
+
+<p>
+No items added yet.
+</p>
+
+
+</div>
+
+
+
+</section>
+
+
+
+
+
+</main>
+
+
+</div>
+
+
+
+
+<script src="script.js"></script>
+
+
+</body>
+
+
+</html>
