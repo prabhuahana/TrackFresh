@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>FreshTrack</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="layout">
+<aside>
+  <h1>FreshTrack</h1>
+  <nav>
+    <a href="dashboard.html">Home</a>
+    <a href="inventory.html">Inventory</a>
+    <a href="recipes.html">Recipes</a>
+    <a href="shopping.html">Shopping</a>
+    <a href="scan.html">Scan</a>
+    <a href="stores.html">Stores</a>
+    <a href="reminders.html">Reminders</a>
+    <a href="rewards.html">Rewards</a>
+    <a href="profile.html">Profile</a>
+    <a href="help.html">Help</a>
+  </nav>
+  <div class="sidebar-footer">
+    <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">Dark mode</button>
+  </div>
+</aside>
+<main>
+<header>
+  <h2>Kitchen <span class="points-display" id="pointsDisplay">0</span> pts</h2>
+  <p>Manage your groceries and reduce food waste.</p>
+</header>
+
+<div class="tile-grid" id="tileGrid"></div>
+
+<div class="notif-banner" id="notifBanner" style="display:none;">
+  <p>Enable reminders so you never miss an expiry date.</p>
+  <button class="btn-small" onclick="enableNotifications()">Enable</button>
+</div>
+
+<section>
+  <div class="section-header">
+    <h3>Use first</h3>
+    <span class="badge" id="expiringBadge">0</span>
+  </div>
+  <div id="expiringFood"><p class="empty-state">No items expiring soon.</p></div>
+</section>
+
+<section>
+  <div class="section-header">
+    <h3>Rotting alert</h3>
+    <span class="badge" id="rottingBadge">0</span>
+  </div>
+  <div id="rottingFood"><p class="empty-state">No signs of spoiling.</p></div>
+</section>
+
+<section>
+  <h3>Your pantry</h3>
+  <div id="dashboardFood"><p class="empty-state">Your pantry is empty.</p></div>
+</section>
+
+<section class="recipe-panel">
+  <h3>Meal ideas</h3>
+  <p style="color:var(--text-muted);font-size:14px;margin-top:0;">Based on what's expiring — tap for full recipes.</p>
+  <div class="meal-buttons" id="mealButtons"></div>
+</section>
+
+<section>
+  <h3>Rewards</h3>
+  <div id="rewardsPreview"></div>
+</section>
+
+<section>
+  <h3>Seasonal produce</h3>
+  <p id="seasonText">Seasonal recommendations will appear here.</p>
+</section>
+
+</main>
+</div>
+<script src="data.js"></script>
+<script src="script.js"></script>
+</body>
+</html>

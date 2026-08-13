@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>FreshTrack — Recipes</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="layout">
+<aside>
+  <h1>FreshTrack</h1>
+  <nav>
+    <a href="dashboard.html">Home</a>
+    <a href="inventory.html">Inventory</a>
+    <a href="recipes.html">Recipes</a>
+    <a href="shopping.html">Shopping</a>
+    <a href="scan.html">Scan</a>
+    <a href="stores.html">Stores</a>
+    <a href="reminders.html">Reminders</a>
+    <a href="rewards.html">Rewards</a>
+    <a href="profile.html">Profile</a>
+    <a href="help.html">Help</a>
+  </nav>
+  <div class="sidebar-footer">
+    <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">Dark mode</button>
+  </div>
+</aside>
+<main>
+<header>
+  <h2>Recipes</h2>
+  <p>Meals matched to your pantry — with dietary alternatives for your profile.</p>
+</header>
+<section>
+  <h3>Suggested Recipes</h3>
+  <div id="recipeList"><p class="empty-state">Add food to your inventory to see recipe matches.</p></div>
+</section>
+</main>
+</div>
+<script src="data.js"></script>
+<script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>FreshTrack — Shopping List</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="layout">
+<aside>
+  <h1>FreshTrack</h1>
+  <nav>
+    <a href="dashboard.html">Home</a>
+    <a href="inventory.html">Inventory</a>
+    <a href="recipes.html">Recipes</a>
+    <a href="shopping.html">Shopping</a>
+    <a href="scan.html">Scan</a>
+    <a href="stores.html">Stores</a>
+    <a href="reminders.html">Reminders</a>
+    <a href="rewards.html">Rewards</a>
+    <a href="profile.html">Profile</a>
+    <a href="help.html">Help</a>
+  </nav>
+  <div class="sidebar-footer">
+    <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">Dark mode</button>
+  </div>
+</aside>
+<main>
+<header>
+  <h2>Shopping List</h2>
+  <p>Track what you need — compare prices across Coles, Woolies and Aldi.</p>
+</header>
+
+<section>
+  <h3>Add Item</h3>
+  <input id="shopItem" placeholder="e.g. Milk, Bread, Eggs" onkeydown="if(event.key==='Enter')addShoppingItem()">
+  <button onclick="addShoppingItem()">Add to List</button>
+</section>
+
+<section>
+  <div class="section-header">
+    <h3>Weekly Staples</h3>
+    <div style="display:flex;gap:8px;">
+      <button class="btn-small btn-peach" onclick="addAllStaples()">Add all ★</button>
+      <button class="btn-small btn-outline" onclick="autoWeeklyStaples()">Auto-add weekly</button>
+    </div>
+  </div>
+  <p style="color:var(--text-muted);font-size:14px;margin-top:0;">Star foods in Inventory to pin them here.</p>
+  <div class="staples-grid" id="staplesList"></div>
+</section>
+
+<section>
+  <div class="section-header">
+    <h3>Your List</h3>
+    <button class="btn-small btn-outline" onclick="clearCheckedItems()">Clear checked</button>
+  </div>
+  <div id="shoppingList"><p class="empty-state">Your shopping list is empty.</p></div>
+</section>
+
+<section>
+  <h3>Price Comparison</h3>
+  <p style="color:var(--text-muted);font-size:14px;margin-top:0;">Cheapest store highlighted for each item.</p>
+  <div id="priceCompare"></div>
+  <p style="margin-top:12px;"><a href="stores.html" class="btn btn-small btn-outline">View store brochures →</a></p>
+</section>
+
+</main>
+</div>
+<script src="data.js"></script>
+<script src="script.js"></script>
+</body>
+</html>

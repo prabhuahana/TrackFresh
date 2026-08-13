@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>FreshTrack Inventory</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="layout">
+<aside>
+  <h1>FreshTrack</h1>
+  <nav>
+    <a href="dashboard.html">Home</a>
+    <a href="inventory.html">Inventory</a>
+    <a href="recipes.html">Recipes</a>
+    <a href="shopping.html">Shopping</a>
+    <a href="scan.html">Scan</a>
+    <a href="stores.html">Stores</a>
+    <a href="reminders.html">Reminders</a>
+    <a href="rewards.html">Rewards</a>
+    <a href="profile.html">Profile</a>
+    <a href="help.html">Help</a>
+  </nav>
+  <div class="sidebar-footer">
+    <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">Dark mode</button>
+  </div>
+</aside>
+<main>
+<header>
+  <h2>Inventory</h2>
+  <p>Add and manage the food currently in your kitchen.</p>
+</header>
+
+<section>
+  <h3>Add Food</h3>
+  <input id="foodName" placeholder="Food name">
+  <input id="purchaseDate" type="date" title="Purchase date">
+  <input id="expiryDate" type="date">
+  <div class="quantity-row">
+    <input id="quantity" type="number" placeholder="Amount">
+    <select id="unit">
+      <option value="g">grams (g)</option>
+      <option value="kg">kilograms (kg)</option>
+      <option value="ml">millilitres (mL)</option>
+      <option value="L">litres (L)</option>
+      <option value="pieces">pieces</option>
+    </select>
+  </div>
+  <select id="foodCategory">
+    <option value="produce">Produce</option>
+    <option value="dairy">Dairy</option>
+    <option value="meat">Meat</option>
+    <option value="grains">Grains</option>
+    <option value="pantry">Pantry</option>
+    <option value="frozen">Frozen</option>
+    <option value="beverages">Beverages</option>
+    <option value="other">Other</option>
+  </select>
+  <div class="checkbox-row">
+    <input type="checkbox" id="favouriteCheck">
+    <label for="favouriteCheck">Weekly staple (auto-add to shopping list)</label>
+  </div>
+  <button onclick="addFood()">Add Item</button>
+  <p style="margin-top:12px;"><a href="scan.html" class="btn btn-small btn-outline">Or scan a receipt →</a></p>
+</section>
+
+<section>
+  <h3>Your Food</h3>
+  <div id="foodList"><p class="empty-state">No items added yet.</p></div>
+</section>
+
+</main>
+</div>
+<script src="data.js"></script>
+<script src="script.js"></script>
+</body>
+</html>

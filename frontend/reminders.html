@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>FreshTrack — Reminders</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="layout">
+<aside>
+  <h1>FreshTrack</h1>
+  <nav>
+    <a href="dashboard.html">Home</a>
+    <a href="inventory.html">Inventory</a>
+    <a href="recipes.html">Recipes</a>
+    <a href="shopping.html">Shopping</a>
+    <a href="scan.html">Scan</a>
+    <a href="stores.html">Stores</a>
+    <a href="reminders.html">Reminders</a>
+    <a href="rewards.html">Rewards</a>
+    <a href="profile.html">Profile</a>
+    <a href="help.html">Help</a>
+  </nav>
+  <div class="sidebar-footer">
+    <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">Dark mode</button>
+  </div>
+</aside>
+<main>
+<header>
+  <h2>Reminders</h2>
+  <p>Use expiring food first — sorted by urgency.</p>
+</header>
+
+<div class="notif-banner" id="notifBanner" style="display:none;">
+  <p>Enable browser notifications for expiry alerts.</p>
+  <button class="btn-small" onclick="enableNotifications()">Enable</button>
+</div>
+
+<section>
+  <h3>Priority Order</h3>
+  <p style="color:var(--text-muted);font-size:14px;margin-top:0;">
+    🔴 Critical = expired · 🟠 High = today/tomorrow · 🟡 Medium = within 3 days
+  </p>
+  <div id="remindersList"></div>
+</section>
+
+</main>
+</div>
+<script src="data.js"></script>
+<script src="script.js"></script>
+</body>
+</html>

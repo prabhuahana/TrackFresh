@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>FreshTrack — Stores & Prices</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="layout">
+<aside>
+  <h1>FreshTrack</h1>
+  <nav>
+    <a href="dashboard.html">Home</a>
+    <a href="inventory.html">Inventory</a>
+    <a href="recipes.html">Recipes</a>
+    <a href="shopping.html">Shopping</a>
+    <a href="scan.html">Scan</a>
+    <a href="stores.html">Stores</a>
+    <a href="reminders.html">Reminders</a>
+    <a href="rewards.html">Rewards</a>
+    <a href="profile.html">Profile</a>
+    <a href="help.html">Help</a>
+  </nav>
+  <div class="sidebar-footer">
+    <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">Dark mode</button>
+  </div>
+</aside>
+<main>
+<header>
+  <h2>Stores & Prices</h2>
+  <p>Compare Coles, Woolworths and Aldi — plus weekly specials.</p>
+</header>
+
+<section>
+  <h3>Price Search</h3>
+  <input id="priceSearch" placeholder="Search e.g. milk, bread, chicken...">
+  <div id="priceResults" style="margin-top:16px;"></div>
+</section>
+
+<section>
+  <h3>Weekly Brochures</h3>
+  <div class="brochure-grid" id="brochureGrid"></div>
+</section>
+
+</main>
+</div>
+<script src="data.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
