@@ -13,10 +13,7 @@
     <a href="inventory.html">Inventory</a>
     <a href="recipes.html">Recipes</a>
     <a href="shopping.html">Shopping</a>
-    <a href="scan.html">Scan</a>
-    <a href="stores.html">Stores</a>
     <a href="reminders.html">Reminders</a>
-    <a href="rewards.html">Rewards</a>
     <a href="profile.html">Profile</a>
     <a href="help.html">Help</a>
   </nav>
@@ -27,50 +24,11 @@
 <main>
 <header>
   <h2>Scan Receipt</h2>
-  <p>Paste receipt text — no photos, no card details, data deleted after import.</p>
+  <p>This feature has been removed to keep the app simple and realistic for a short student project.</p>
 </header>
 
-<div class="privacy-note">
-  🔒 <strong>Privacy first:</strong> We never store credit card numbers. Only item names and prices are parsed.
-  Your region is used for pricing estimates, not your exact store. Raw receipt text is deleted immediately after import.
-  Enable consent in <a href="profile.html">Profile</a> before scanning.
-</div>
-
 <section>
-  <h3>Paste Receipt Text</h3>
-  <p style="color:var(--text-muted);font-size:14px;">Copy text from your receipt or type items manually — one per line:</p>
-  <textarea id="receiptText" class="scan-textarea" placeholder="Milk 2.50
-Bread 3.00
-Bananas 1.80
-Chicken Breast 9.00"></textarea>
-  <div class="quantity-row" style="margin-top:12px;">
-    <label>Region:</label>
-    <select id="scanRegion">
-      <option value="NSW">NSW</option>
-      <option value="VIC">VIC</option>
-      <option value="QLD">QLD</option>
-      <option value="WA">WA</option>
-      <option value="SA">SA</option>
-      <option value="TAS">TAS</option>
-      <option value="ACT">ACT</option>
-      <option value="NT">NT</option>
-    </select>
-  </div>
-  <button onclick="scanReceipt()">Parse Receipt</button>
-  <p id="scanAccuracy" style="margin-top:12px;font-size:14px;color:var(--text-muted);"></p>
-</section>
-
-<section>
-  <h3>Preview</h3>
-  <div id="scanStatus"></div>
-  <div id="scanPreview"><p class="empty-state">Parsed items will appear here. Uncheck any you don't want to add.</p></div>
-</section>
-
-<section>
-  <h3>Was this scan accurate?</h3>
-  <p style="color:var(--text-muted);font-size:14px;">Help us improve — your feedback builds trust.</p>
-  <button class="btn-small" onclick="confirmScanAccuracy(true)">Yes, accurate</button>
-  <button class="btn-small btn-outline" onclick="confirmScanAccuracy(false)">Had errors</button>
+  <p class="empty-state">Use the Inventory page to add food manually instead.</p>
 </section>
 
 </main>

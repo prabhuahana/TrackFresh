@@ -212,6 +212,6 @@ const DASHBOARD_SECTIONS = [
   { id: "rotting", label: "Rotting Alert", icon: "R" },
   { id: "pantry", label: "Your Pantry", icon: "P" },
   { id: "meals", label: "Meal Ideas", icon: "M" },
-  { id: "rewards", label: "Rewards", icon: "W" },
+
   { id: "seasonal", label: "Seasonal Produce", icon: "S" }
 ];

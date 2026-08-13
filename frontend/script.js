@@ -52,15 +52,12 @@ function getDefaultProfile() {
     name: "", email: "", passwordHash: "",
     diet: "none", preferences: [],
     region: "NSW",
-    notifications: false, rottingAlerts: true, scanConsent: false,
-    twoFactor: false, twoFactorCode: "",
+    notifications: false, rottingAlerts: true,
     theme: "light",
     customAccent: "", customPeach: "",
-    pinnedSections: ["expiring", "rotting", "pantry", "meals", "rewards", "seasonal"],
-    pinnedTiles: ["inventory", "shopping", "recipes", "scan", "stores", "reminders"],
+    pinnedSections: ["expiring", "rotting", "pantry", "meals", "seasonal"],
+    pinnedTiles: ["inventory", "shopping", "recipes", "reminders"],
     points: 0,
-    pointsHistory: [],
-    scanAccuracy: { total: 0, correct: 0 },
     lastWeeklyAdd: null,
     streak: 0
   };
@@ -110,9 +107,6 @@ function applyCustomColors() {
 function addPoints(amount, reason) {
   const p = getProfile();
   p.points = (p.points || 0) + amount;
-  if (!p.pointsHistory) p.pointsHistory = [];
-  p.pointsHistory.unshift({ amount: amount, reason: reason, date: new Date().toISOString() });
-  if (p.pointsHistory.length > 50) p.pointsHistory.length = 50;
   saveProfile(p);
   updatePointsDisplay();
 }
@@ -209,14 +203,6 @@ function login() {
     }
   }
 
-  if (profile.twoFactor) {
-    const code = prompt("Enter your 2FA code (check Profile for your code):");
-    if (code !== profile.twoFactorCode) {
-      alert("Invalid 2FA code.");
-      return;
-    }
-  }
-
   if (email && email.value) {
     profile.email = email.value;
     saveProfile(profile);
@@ -261,23 +247,6 @@ function changePassword() {
   saveProfile(profile);
   alert("Password updated.");
   current.value = ""; newPw.value = ""; confirm.value = "";
-}
-
-function generate2FACode() {
-  const code = String(Math.floor(100000 + Math.random() * 900000));
-  const profile = getProfile();
-  profile.twoFactorCode = code;
-  saveProfile(profile);
-  const el = document.getElementById("twoFactorCodeDisplay");
-  if (el) el.textContent = code;
-  return code;
-}
-
-function toggle2FA() {
-  const profile = getProfile();
-  profile.twoFactor = document.getElementById("twoFactorCheck").checked;
-  if (profile.twoFactor) generate2FACode();
-  saveProfile(profile);
 }
 
 /* ── Nav ── */
@@ -428,7 +397,6 @@ function loadDashboard() {
   loadRottingSection();
   loadPantrySection();
   loadMealButtons();
-  loadRewardsSection();
   loadSeasonalTip();
   updatePointsDisplay();
 }
@@ -441,10 +409,7 @@ function loadDashboardTiles() {
     { id: "inventory", href: "inventory.html", icon: "I", label: "Inventory" },
     { id: "shopping", href: "shopping.html", icon: "S", label: "Shopping" },
     { id: "recipes", href: "recipes.html", icon: "R", label: "Recipes" },
-    { id: "scan", href: "scan.html", icon: "P", label: "Scan Receipt" },
-    { id: "stores", href: "stores.html", icon: "T", label: "Stores" },
     { id: "reminders", href: "reminders.html", icon: "N", label: "Reminders" },
-    { id: "rewards", href: "rewards.html", icon: "W", label: "Rewards" },
     { id: "profile", href: "profile.html", icon: "U", label: "Profile" }
   ];
 
@@ -558,18 +523,6 @@ function loadPantrySection() {
       '</div>';
     dashboardFood.appendChild(div);
   });
-}
-
-function loadRewardsSection() {
-  const el = document.getElementById("rewardsPreview");
-  if (!el) return;
-  const p = getProfile();
-  el.innerHTML =
-    '<div class="points-card">' +
-      '<div class="points-big">' + (p.points || 0) + '</div>' +
-      '<p>FreshPoints earned</p>' +
-      '<a href="rewards.html" class="btn btn-small" style="margin-top:10px;">View rewards</a>' +
-    '</div>';
 }
 
 function loadSeasonalTip() {
@@ -848,199 +801,6 @@ function findPrice(name) {
   return PRICE_DATA.find(function (p) { return n.includes(p.item) || p.item.includes(n); });
 }
 
-/* ── Stores & Brochures ── */
-
-function loadStoresPage() {
-  loadBrochures();
-  loadPriceSearch();
-}
-
-function loadBrochures() {
-  const container = document.getElementById("brochureGrid");
-  if (!container) return;
-  container.innerHTML = "";
-
-  Object.keys(BROCHURES).forEach(function (key) {
-    const store = BROCHURES[key];
-    const card = document.createElement("div");
-    card.className = "brochure-card";
-    card.innerHTML = '<div class="brochure-header" style="background:' + store.color + '"><h4>' + store.name + ' Weekly Specials</h4></div><div class="brochure-deals"></div>';
-    const deals = card.querySelector(".brochure-deals");
-    store.deals.forEach(function (d) {
-      deals.innerHTML +=
-        '<div class="deal-item"><strong>' + d.item + '</strong>' +
-        '<span class="deal-price">' + d.price + '</span>' +
-        '<span class="deal-was">was ' + d.was + '</span>' +
-        '<span class="deal-until">Until ' + d.until + '</span></div>';
-    });
-    container.appendChild(card);
-  });
-}
-
-function loadPriceSearch() {
-  const input = document.getElementById("priceSearch");
-  const results = document.getElementById("priceResults");
-  if (!input || !results) return;
-
-  function search() {
-    const q = input.value.toLowerCase().trim();
-    results.innerHTML = "";
-    if (!q) return;
-
-    const matches = PRICE_DATA.filter(function (p) { return p.item.includes(q) || q.includes(p.item); });
-    if (matches.length === 0) {
-      results.innerHTML = '<p class="empty-state">No prices found for "' + q + '". Try milk, bread, chicken...</p>';
-      return;
-    }
-
-    matches.forEach(function (p) {
-      const cheapest = Math.min(p.coles, p.woolies, p.aldi);
-      const store = cheapest === p.aldi ? "Aldi" : cheapest === p.woolies ? "Woolies" : "Coles";
-      results.innerHTML +=
-        '<div class="price-row">' +
-          '<strong>' + p.item.charAt(0).toUpperCase() + p.item.slice(1) + '</strong>' +
-          '<div class="price-stores">' +
-            '<span class="' + (p.coles === cheapest ? "cheapest" : "") + '">Coles $' + p.coles.toFixed(2) + '</span>' +
-            '<span class="' + (p.woolies === cheapest ? "cheapest" : "") + '">Woolies $' + p.woolies.toFixed(2) + '</span>' +
-            '<span class="' + (p.aldi === cheapest ? "cheapest" : "") + '">Aldi $' + p.aldi.toFixed(2) + '</span>' +
-          '</div>' +
-          '<span class="cheapest-tag">Cheapest at ' + store + '</span>' +
-        '</div>';
-    });
-  }
-
-  input.oninput = search;
-}
-
-/* ── Receipt Scanning ── */
-
-function parseReceiptText(text) {
-  const lines = text.split("\n").map(function (l) { return l.trim(); }).filter(Boolean);
-  const items = [];
-  const skipWords = ["total", "subtotal", "gst", "tax", "change", "cash", "card", "visa", "mastercard", "eftpos", "abn", "thank", "receipt"];
-
-  lines.forEach(function (line) {
-    const lower = line.toLowerCase();
-    if (skipWords.some(function (w) { return lower.includes(w); })) return;
-
-    const priceMatch = line.match(/\$?\s*(\d+\.\d{2})\s*$/);
-    let price = null;
-    let name = line;
-
-    if (priceMatch) {
-      price = parseFloat(priceMatch[1]);
-      name = line.substring(0, priceMatch.index).trim();
-    }
-
-    name = name.replace(/\d+\s*x\s*/i, "").replace(/\*\s*/g, "").trim();
-    if (name.length < 2) return;
-
-    const words = name.split(/\s+/);
-    if (words.length > 6) return;
-
-    items.push({ name: name, price: price });
-  });
-
-  return items;
-}
-
-function scanReceipt() {
-  const profile = getProfile();
-  if (!profile.scanConsent) {
-    alert("Please enable receipt scanning consent in Profile first.");
-    return;
-  }
-
-  const text = document.getElementById("receiptText").value.trim();
-  if (!text) { alert("Paste your receipt text first."); return; }
-
-  const region = document.getElementById("scanRegion") ? document.getElementById("scanRegion").value : profile.region;
-  const items = parseReceiptText(text);
-  const preview = document.getElementById("scanPreview");
-  const status = document.getElementById("scanStatus");
-
-  if (items.length === 0) {
-    if (status) status.innerHTML = '<p class="empty-state">Could not parse any items. Try one item per line, e.g. "Milk 2.50"</p>';
-    return;
-  }
-
-  if (preview) {
-    preview.innerHTML = "<h4>Parsed " + items.length + " items (region: " + region + "):</h4>";
-    items.forEach(function (item, i) {
-      const days = 7;
-      const expiry = new Date();
-      expiry.setDate(expiry.getDate() + days);
-      preview.innerHTML +=
-        '<div class="scan-item">' +
-          '<label><input type="checkbox" checked class="scan-check" data-idx="' + i + '"> ' +
-          foodEmoji(item.name) + " <strong>" + item.name + "</strong>" +
-          (item.price ? " — $" + item.price.toFixed(2) : "") +
-          ' · Est. expiry: <input type="date" class="scan-expiry" data-idx="' + i + '" value="' + expiry.toISOString().split("T")[0] + '">' +
-          '</label></div>';
-    });
-    preview.innerHTML += '<button class="btn" onclick="confirmScan()" style="margin-top:16px;">Add selected to inventory</button>';
-    preview.dataset.items = JSON.stringify(items);
-  }
-
-  if (status) status.innerHTML = '<p class="scan-success">✓ Parsed successfully. No receipt data stored. Review items above.</p>';
-}
-
-function confirmScan() {
-  const preview = document.getElementById("scanPreview");
-  if (!preview || !preview.dataset.items) return;
-
-  const items = JSON.parse(preview.dataset.items);
-  const foods = getFoods();
-  let added = 0;
-
-  items.forEach(function (item, i) {
-    const check = document.querySelector('.scan-check[data-idx="' + i + '"]');
-    if (!check || !check.checked) return;
-
-    const expiryEl = document.querySelector('.scan-expiry[data-idx="' + i + '"]');
-    const expiry = expiryEl ? expiryEl.value : todayStr();
-    const cat = guessCategory(item.name);
-
-    foods.push({
-      name: item.name, expiry: expiry, quantity: 1, unit: "pieces",
-      favourite: false, category: cat, purchaseDate: todayStr(), emoji: foodEmoji(item.name)
-    });
-    added++;
-  });
-
-  saveFoods(foods);
-  addPoints(POINTS_RULES.scanReceipt * added, "Scanned " + added + " items from receipt");
-
-  const profile = getProfile();
-  profile.scanAccuracy.total = (profile.scanAccuracy.total || 0) + added;
-  profile.scanAccuracy.correct = (profile.scanAccuracy.correct || 0) + added;
-  saveProfile(profile);
-
-  document.getElementById("receiptText").value = "";
-  preview.innerHTML = '<p class="empty-state">Receipt deleted. ' + added + ' items added to inventory. +' + (POINTS_RULES.scanReceipt * added) + ' points!</p>';
-  preview.dataset.items = "";
-
-  refreshFoodViews();
-  updateScanAccuracy();
-}
-
-function confirmScanAccuracy(correct) {
-  const profile = getProfile();
-  if (correct) profile.scanAccuracy.correct = (profile.scanAccuracy.correct || 0) + 1;
-  profile.scanAccuracy.total = (profile.scanAccuracy.total || 0) + 1;
-  saveProfile(profile);
-  updateScanAccuracy();
-}
-
-function updateScanAccuracy() {
-  const el = document.getElementById("scanAccuracy");
-  if (!el) return;
-  const acc = getProfile().scanAccuracy || { total: 0, correct: 0 };
-  if (acc.total === 0) { el.textContent = "No scans yet."; return; }
-  const pct = Math.round((acc.correct / acc.total) * 100);
-  el.textContent = "Scan accuracy: " + pct + "% (" + acc.correct + "/" + acc.total + " items correct)";
-}
-
 /* ── Reminders ── */
 
 function loadRemindersPage() {
@@ -1130,42 +890,6 @@ function enableNotifications() {
   });
 }
 
-/* ── Rewards ── */
-
-function loadRewardsPage() {
-  const total = document.getElementById("pointsTotal");
-  const history = document.getElementById("pointsHistory");
-  const tiers = document.getElementById("rewardTiers");
-  if (!total) return;
-
-  const p = getProfile();
-  total.textContent = p.points || 0;
-
-  if (history) {
-    history.innerHTML = "";
-    if (!p.pointsHistory || p.pointsHistory.length === 0) {
-      history.innerHTML = '<p class="empty-state">Start tracking food to earn points!</p>';
-    } else {
-      p.pointsHistory.forEach(function (h) {
-        const div = document.createElement("div");
-        div.className = "history-item";
-        div.innerHTML = '<span class="history-amount">+' + h.amount + '</span> ' + h.reason +
-          '<span class="history-date">' + new Date(h.date).toLocaleDateString() + '</span>';
-        history.appendChild(div);
-      });
-    }
-  }
-
-  if (tiers) {
-    const pts = p.points || 0;
-    tiers.innerHTML =
-      '<div class="tier' + (pts >= 50 ? " unlocked" : "") + '"><span class="tier-mark">S</span> Seedling — 50 pts</div>' +
-      '<div class="tier' + (pts >= 150 ? " unlocked" : "") + '"><span class="tier-mark">P</span> Sprout — 150 pts</div>' +
-      '<div class="tier' + (pts >= 300 ? " unlocked" : "") + '"><span class="tier-mark">G</span> Green Thumb — 300 pts</div>' +
-      '<div class="tier' + (pts >= 500 ? " unlocked" : "") + '"><span class="tier-mark">W</span> Waste Warrior — 500 pts</div>';
-  }
-}
-
 /* ── Profile ── */
 
 const PREF_OPTIONS = ["no nuts", "no dairy", "low sugar", "organic", "quick meals", "budget-friendly"];
@@ -1178,18 +902,12 @@ function loadProfile() {
   setVal("profileRegion", p.region);
   setCheck("notifCheck", p.notifications);
   setCheck("rottingCheck", p.rottingAlerts);
-  setCheck("scanConsent", p.scanConsent);
-  setCheck("twoFactorCheck", p.twoFactor);
   setVal("customAccent", p.customAccent);
   setVal("customPeach", p.customPeach);
 
   renderPrefChips(p.preferences || []);
   renderPinTiles(p.pinnedTiles || []);
   renderPinSections(p.pinnedSections || []);
-  updateScanAccuracy();
-
-  const codeEl = document.getElementById("twoFactorCodeDisplay");
-  if (codeEl && p.twoFactor) codeEl.textContent = p.twoFactorCode || "Generate a code";
 }
 
 function setVal(id, val) { const el = document.getElementById(id); if (el) el.value = val || ""; }
@@ -1214,8 +932,7 @@ function renderPinTiles(pinned) {
   if (!container) return;
   const tiles = [
     { id: "inventory", label: "Inventory" }, { id: "shopping", label: "Shopping" },
-    { id: "recipes", label: "Recipes" }, { id: "scan", label: "Scan" },
-    { id: "stores", label: "Stores" }, { id: "reminders", label: "Reminders" }
+    { id: "recipes", label: "Recipes" }, { id: "reminders", label: "Reminders" }
   ];
   container.innerHTML = "";
   tiles.forEach(function (t) {
@@ -1252,7 +969,6 @@ function saveProfileForm() {
   p.region = document.getElementById("profileRegion") ? document.getElementById("profileRegion").value : p.region;
   p.notifications = document.getElementById("notifCheck").checked;
   p.rottingAlerts = document.getElementById("rottingCheck") ? document.getElementById("rottingCheck").checked : true;
-  p.scanConsent = document.getElementById("scanConsent").checked;
   p.customAccent = document.getElementById("customAccent") ? document.getElementById("customAccent").value : "";
   p.customPeach = document.getElementById("customPeach") ? document.getElementById("customPeach").value : "";
 
@@ -1322,12 +1038,9 @@ document.addEventListener("DOMContentLoaded", function () {
   loadStaples();
   loadProfile();
   loadRemindersPage();
-  loadRewardsPage();
-  loadStoresPage();
   loadPriceCompare();
   showNotifBanner();
   checkReminders();
-  updateScanAccuracy();
   updatePointsDisplay();
 
   const purchaseDate = document.getElementById("purchaseDate");
