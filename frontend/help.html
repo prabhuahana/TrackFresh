@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>FreshTrack — Help</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!--
+PSEUDOCODE:
+BEGIN
+  show help article explaining how to add food, track expiry dates, use recipes, and manage shopping
+  explain how to enable notifications and use profile settings
+  explain how dark mode and dashboard features work
+END
+-->
+
+<div class="layout">
+
+<aside>
+  <h1>FreshTrack</h1>
+  <nav>
+    <a href="dashboard.html"><img src="../HomePage.png" alt="">Home</a>
+    <a href="reminders.html"><img src="../ExpiryDates.png" alt="">Reminders</a>
+    <a href="inventory.html"><img src="../Inventory.png" alt="">Inventory</a>
+    <a href="recipes.html"><img src="../Recipes.png" alt="">Recipes</a>
+    <a href="shopping.html"><img src="../Shopping.png" alt="">Shopping</a>
+    <a href="help.html"><img src="../FoodFacts.png" alt="">Food Facts</a>
+  </nav>
+  <div class="sidebar-footer">
+    <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">Dark mode</button>
+  </div>
+</aside>
+
+<main>
+
+<div class="topbar">
+  <a class="brand" href="dashboard.html" aria-label="FreshTrack home"><span>Track</span><strong>Fresh</strong><i></i></a>
+  <a class="profile-link" href="profile.html" aria-label="Open profile"><img src="../profile.png" alt=""></a>
+</div>
+
+<header>
+  <h2>Food Facts</h2>
+  <p>Discover seasonal produce and simple ways to keep food fresh.</p>
+</header>
+
+<section class="facts-grid">
+  <details class="fact-card" open>
+    <summary>What's in season</summary>
+    <p>Summer produce includes stone fruit, berries, zucchini, and tomatoes.</p>
+  </details>
+  <details class="fact-card">
+    <summary>Keep it fresh</summary>
+    <p>Store leafy greens with a dry paper towel to help absorb excess moisture.</p>
+  </details>
+  <details class="fact-card">
+    <summary>Reduce waste</summary>
+    <p>Use soft fruit in smoothies, sauces, or baking before it becomes spoiled.</p>
+  </details>
+  <details class="fact-card">
+    <summary>What's in season</summary>
+    <p>Autumn is ideal for apples, pears, pumpkin, and sweet potato.</p>
+  </details>
+  <details class="fact-card">
+    <summary>Smart storage</summary>
+    <p>Keep potatoes, onions, and garlic in a cool, dark, dry place.</p>
+  </details>
+  <details class="fact-card">
+    <summary>What's in season</summary>
+    <p>Winter brings citrus, broccoli, cauliflower, and root vegetables.</p>
+  </details>
+</section>
+
+</main>
+</div>
+
+<script src="data.js"></script>
+<script src="script.js"></script>
+</body>
+</html>

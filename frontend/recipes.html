@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>FreshTrack — Recipes</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<!--
+PSEUDOCODE:
+BEGIN
+  show suggested recipes based on current pantry items
+  compare pantry ingredients with recipe ingredients
+  filter recipes by diet or food preferences
+  allow user to add missing ingredients to shopping list
+  show cooking instructions and alternative swaps
+END
+-->
+<div class="layout">
+<aside>
+  <h1>FreshTrack</h1>
+  <nav>
+    <a href="dashboard.html"><img src="../HomePage.png" alt="">Home</a>
+    <a href="reminders.html"><img src="../ExpiryDates.png" alt="">Reminders</a>
+    <a href="inventory.html"><img src="../Inventory.png" alt="">Inventory</a>
+    <a href="recipes.html"><img src="../Recipes.png" alt="">Recipes</a>
+    <a href="shopping.html"><img src="../Shopping.png" alt="">Shopping</a>
+    <a href="help.html"><img src="../FoodFacts.png" alt="">Food Facts</a>
+  </nav>
+  <div class="sidebar-footer">
+    <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">Dark mode</button>
+  </div>
+</aside>
+<main>
+<div class="topbar">
+  <a class="brand" href="dashboard.html" aria-label="FreshTrack home"><span>Track</span><strong>Fresh</strong><i></i></a>
+  <a class="profile-link" href="profile.html" aria-label="Open profile"><img src="../profile.png" alt=""></a>
+</div>
+<header>
+  <h2>Recipes</h2>
+  <p>Two simple ideas for ingredients already in your kitchen.</p>
+</header>
+<section class="ai-recipe-section">
+  <h3>New ideas from your groceries</h3>
+  <p id="aiRecipeStatus">Ask Mistral for recipes using what is in your inventory.</p>
+  <button id="aiRecipeButton" onclick="generateAiRecipes()">Get AI recipe ideas</button>
+  <div id="aiRecipeList"></div>
+</section>
+<section>
+  <h3>Tonight's options</h3>
+  <div id="recipeList"><p class="empty-state">Add food to your inventory to see recipe matches.</p></div>
+</section>
+</main>
+</div>
+<script src="data.js"></script>
+<script src="script.js"></script>
+</body>
+</html>

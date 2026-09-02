@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>FreshTrack — Rewards</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<!--
+PSEUDOCODE:
+BEGIN
+  display FreshPoints total earned by the user
+  explain reward rules: add food, use before expiry, and cook recipes
+  encourage healthy wastage-reduction habits through gamification
+END
+-->
+<div class="layout">
+<aside>
+  <h1>FreshTrack</h1>
+  <nav>
+    <a href="dashboard.html"><img src="../HomePage.png" alt="">Home</a>
+    <a href="reminders.html"><img src="../ExpiryDates.png" alt="">Reminders</a>
+    <a href="inventory.html"><img src="../Inventory.png" alt="">Inventory</a>
+    <a href="recipes.html"><img src="../Recipes.png" alt="">Recipes</a>
+    <a href="shopping.html"><img src="../Shopping.png" alt="">Shopping</a>
+    <a href="help.html"><img src="../FoodFacts.png" alt="">Food Facts</a>
+  </nav>
+  <div class="sidebar-footer">
+    <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">Dark mode</button>
+  </div>
+</aside>
+<main>
+<div class="topbar">
+  <a class="brand" href="dashboard.html" aria-label="FreshTrack home"><span>Track</span><strong>Fresh</strong><i></i></a>
+  <a class="profile-link" href="profile.html" aria-label="Open profile"><img src="../profile.png" alt=""></a>
+</div>
+<header>
+  <h2>Rewards</h2>
+  <p>Earn FreshPoints for reducing food waste.</p>
+</header>
+
+<section>
+  <div class="points-card">
+    <div class="points-big" id="pointsTotal">0</div>
+    <p>FreshPoints</p>
+  </div>
+</section>
+
+<section>
+  <h3>How to earn</h3>
+  <div class="help-item"><h4>+5 — Add food to inventory</h4><p>Track what you buy</p></div>
+  <div class="help-item"><h4>+20 — Use food before expiry</h4><p>Tap "Used it" before the date passes</p></div>
+  <div class="help-item"><h4>+10 — Cook a recipe</h4><p>Mark a recipe as cooked</p></div>
+</section>
+
+</main>
+</div>
+<script src="data.js"></script>
+<script src="script.js"></script>
+</body>
+</html>

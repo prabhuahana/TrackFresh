@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>FreshTrack — Reminders</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<!--
+PSEUDOCODE:
+BEGIN
+  sort food items by expiry urgency
+  group items into critical, high, medium, and low priority
+  show reminders list for items expiring soon or already expired
+  allow user to mark items as used
+END
+-->
+<div class="layout">
+<aside>
+  <h1>FreshTrack</h1>
+  <nav>
+    <a href="dashboard.html"><img src="../HomePage.png" alt="">Home</a>
+    <a href="reminders.html"><img src="../ExpiryDates.png" alt="">Reminders</a>
+    <a href="inventory.html"><img src="../Inventory.png" alt="">Inventory</a>
+    <a href="recipes.html"><img src="../Recipes.png" alt="">Recipes</a>
+    <a href="shopping.html"><img src="../Shopping.png" alt="">Shopping</a>
+    <a href="help.html"><img src="../FoodFacts.png" alt="">Food Facts</a>
+  </nav>
+  <div class="sidebar-footer">
+    <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">Dark mode</button>
+  </div>
+</aside>
+<main>
+<div class="topbar">
+  <a class="brand" href="dashboard.html" aria-label="FreshTrack home"><span>Track</span><strong>Fresh</strong><i></i></a>
+  <a class="profile-link" href="profile.html" aria-label="Open profile"><img src="../profile.png" alt=""></a>
+</div>
+<header>
+  <h2>Reminders</h2>
+  <p>Use expiring food first — sorted by urgency.</p>
+</header>
+
+<div class="notif-banner" id="notifBanner" style="display:none;">
+  <p>Enable browser notifications for expiry alerts.</p>
+  <button class="btn-small" onclick="enableNotifications()">Enable</button>
+</div>
+
+<section>
+  <h3>Priority Order</h3>
+  <p style="color:var(--text-muted);font-size:14px;margin-top:0;">
+    🔴 Critical = expired · 🟠 High = within 2 days · 🟡 Medium = within 1 week · 🟢 Low = beyond 1 week
+  </p>
+  <div id="remindersList"></div>
+</section>
+
+</main>
+</div>
+<script src="data.js"></script>
+<script src="script.js"></script>
+</body>
+</html>

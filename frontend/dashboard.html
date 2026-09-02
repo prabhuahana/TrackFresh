@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>FreshTrack</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<!--
+PSEUDOCODE:
+BEGIN
+  render sidebar navigation and top-level header
+  show points, inventory summary, expiring items, and rotten food alerts
+  render dashboard tiles for main app pages
+  display meal ideas based on items in pantry
+  show seasonal produce suggestions
+END
+-->
+<div class="layout">
+<aside>
+  <h1>FreshTrack</h1>
+  <nav>
+    <a href="dashboard.html"><img src="../HomePage.png" alt="">Home</a>
+    <a href="reminders.html"><img src="../ExpiryDates.png" alt="">Reminders</a>
+    <a href="inventory.html"><img src="../Inventory.png" alt="">Inventory</a>
+    <a href="recipes.html"><img src="../Recipes.png" alt="">Recipes</a>
+    <a href="shopping.html"><img src="../Shopping.png" alt="">Shopping</a>
+    <a href="help.html"><img src="../FoodFacts.png" alt="">Food Facts</a>
+  </nav>
+  <div class="sidebar-footer">
+    <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">Dark mode</button>
+  </div>
+</aside>
+<main>
+<div class="topbar">
+  <a class="brand" href="dashboard.html" aria-label="FreshTrack home"><span>Track</span><strong>Fresh</strong><i></i></a>
+  <a class="profile-link" href="profile.html" aria-label="Open profile"><img src="../profile.png" alt=""></a>
+</div>
+<div class="notif-banner" id="notifBanner" style="display:none;">
+  <p>Enable reminders so you never miss an expiry date.</p>
+  <button class="btn-small" onclick="enableNotifications()">Enable</button>
+</div>
+
+<div class="home-grid">
+  <section class="home-card expiry-card">
+    <div class="home-card-heading">
+      <h2>Expiry</h2>
+      <span class="badge" id="expiringBadge">0</span>
+    </div>
+    <div id="expiringFood"><p class="empty-state">No items expiring soon.</p></div>
+    <a class="see-more" href="reminders.html">See more <span>›</span></a>
+  </section>
+
+  <section class="home-card fridge-card">
+    <h2>Fridge</h2>
+    <div id="dashboardFood"><p class="empty-state">Your pantry is empty.</p></div>
+    <a class="see-more" href="inventory.html">See more <span>›</span></a>
+  </section>
+
+  <section class="home-card recipes-card">
+    <h2>Recipes</h2>
+    <div class="meal-buttons" id="mealButtons"></div>
+    <a class="see-more" href="recipes.html">See more <span>›</span></a>
+  </section>
+
+  <section class="home-card facts-card">
+    <h2>Fun Facts</h2>
+    <p id="seasonText">Seasonal recommendations will appear here.</p>
+    <a class="see-more" href="help.html">See more <span>›</span></a>
+  </section>
+
+  <section class="home-card shopping-card">
+    <h2>Shopping List</h2>
+    <div id="shoppingList"><p class="empty-state">Your shopping list is empty.</p></div>
+    <a class="see-more" href="shopping.html">See more <span>›</span></a>
+  </section>
+</div>
+
+</main>
+</div>
+<script src="data.js"></script>
+<script src="script.js"></script>
+</body>
+</html>

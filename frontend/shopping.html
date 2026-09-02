@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>FreshTrack — Shopping List</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="layout">
+<aside>
+  <h1>FreshTrack</h1>
+  <nav>
+    <a href="dashboard.html"><img src="../HomePage.png" alt="">Home</a>
+    <a href="reminders.html"><img src="../ExpiryDates.png" alt="">Reminders</a>
+    <a href="inventory.html"><img src="../Inventory.png" alt="">Inventory</a>
+    <a href="recipes.html"><img src="../Recipes.png" alt="">Recipes</a>
+    <a href="shopping.html"><img src="../Shopping.png" alt="">Shopping</a>
+    <a href="help.html"><img src="../FoodFacts.png" alt="">Food Facts</a>
+  </nav>
+  <div class="sidebar-footer">
+    <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">Dark mode</button>
+  </div>
+</aside>
+
+<main>
+<div class="topbar">
+  <a class="brand" href="dashboard.html" aria-label="FreshTrack home"><span>Track</span><strong>Fresh</strong><i></i></a>
+  <a class="profile-link" href="profile.html" aria-label="Open profile"><img src="../profile.png" alt=""></a>
+</div>
+
+<header>
+  <h2>Shopping List</h2>
+  <p>Organize your shopping across multiple lists.</p>
+</header>
+
+<div class="shopping-lists-container">
+  <section class="shopping-list-card">
+    <div class="card-header">
+      <h3>AI List</h3>
+      <button class="btn-small btn-outline" onclick="clearList('aiList')">Clear</button>
+    </div>
+    <div class="shopping-items" id="aiList"></div>
+    <div class="add-item-row">
+      <input type="text" id="aiListInput" placeholder="Add item...">
+      <button class="btn-small" onclick="addItemToList('aiList')">+</button>
+    </div>
+  </section>
+
+  <section class="shopping-list-card">
+    <div class="card-header">
+      <h3>Custom List</h3>
+      <button class="btn-small btn-outline" onclick="clearList('customList')">Clear</button>
+    </div>
+    <div class="shopping-items" id="customList"></div>
+    <div class="add-item-row">
+      <input type="text" id="customListInput" placeholder="Add item...">
+      <button class="btn-small" onclick="addItemToList('customList')">+</button>
+    </div>
+  </section>
+
+  <section class="shopping-list-card">
+    <div class="card-header">
+      <h3>Other List</h3>
+      <button class="btn-small btn-outline" onclick="clearList('otherList1')">Clear</button>
+    </div>
+    <div class="shopping-items" id="otherList1"></div>
+    <div class="add-item-row">
+      <input type="text" id="otherList1Input" placeholder="Add item...">
+      <button class="btn-small" onclick="addItemToList('otherList1')">+</button>
+    </div>
+  </section>
+
+  <section class="shopping-list-card">
+    <div class="card-header">
+      <h3>Other List</h3>
+      <button class="btn-small btn-outline" onclick="clearList('otherList2')">Clear</button>
+    </div>
+    <div class="shopping-items" id="otherList2"></div>
+    <div class="add-item-row">
+      <input type="text" id="otherList2Input" placeholder="Add item...">
+      <button class="btn-small" onclick="addItemToList('otherList2')">+</button>
+    </div>
+  </section>
+</div>
+
+</main>
+</div>
+
+<script src="data.js"></script>
+<script src="script.js"></script>
+</body>
+</html>

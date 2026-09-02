@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>FreshTrack — Profile</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!--
+PSEUDOCODE:
+BEGIN
+  show profile form for name, email, diet, preferences, and notifications
+  allow user to select favourite food categories and pinned dashboard sections
+  when Save Profile is clicked:
+    store settings in local storage
+    apply custom theme preferences
+END
+-->
+
+<div class="layout">
+
+<aside>
+  <h1>FreshTrack</h1>
+  <nav>
+    <a href="dashboard.html"><img src="../HomePage.png" alt="">Home</a>
+    <a href="reminders.html"><img src="../ExpiryDates.png" alt="">Reminders</a>
+    <a href="inventory.html"><img src="../Inventory.png" alt="">Inventory</a>
+    <a href="recipes.html"><img src="../Recipes.png" alt="">Recipes</a>
+    <a href="shopping.html"><img src="../Shopping.png" alt="">Shopping</a>
+    <a href="help.html"><img src="../FoodFacts.png" alt="">Food Facts</a>
+  </nav>
+  <div class="sidebar-footer">
+    <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">Dark mode</button>
+  </div>
+</aside>
+
+<main>
+
+<div class="topbar">
+  <a class="brand" href="dashboard.html" aria-label="FreshTrack home"><span>Track</span><strong>Fresh</strong><i></i></a>
+  <a class="profile-link active" href="profile.html" aria-label="Open profile"><img src="../profile.png" alt=""></a>
+</div>
+
+<header>
+  <h2>Profile</h2>
+  <p>Customise your diet, preferences, and privacy settings.</p>
+</header>
+
+<section>
+  <h3>Account</h3>
+  <input id="profileName" type="text" placeholder="Your name">
+  <input id="profileEmail" type="email" placeholder="Email">
+</section>
+
+<section>
+  <h3>Diet</h3>
+  <select id="profileDiet">
+    <option value="none">No specific diet</option>
+    <option value="vegetarian">Vegetarian</option>
+    <option value="vegan">Vegan</option>
+    <option value="keto">Keto</option>
+    <option value="paleo">Paleo</option>
+    <option value="gluten-free">Gluten-free</option>
+  </select>
+</section>
+
+<section>
+  <h3>Food Preferences</h3>
+  <p style="color:var(--text-muted);font-size:14px;margin-top:0;">Tap to select — used to filter recipe suggestions.</p>
+  <div class="preference-chips" id="prefChips"></div>
+</section>
+
+<section>
+  <h3>Notifications & Privacy</h3>
+  <div class="checkbox-row">
+    <input type="checkbox" id="notifCheck">
+    <label for="notifCheck">Send expiry reminders (browser notifications)</label>
+  </div>
+</section>
+
+<section>
+  <button onclick="saveProfileForm()">Save Profile</button>
+</section>
+
+</main>
+</div>
+
+<script src="data.js"></script>
+<script src="script.js"></script>
+</body>
+</html>

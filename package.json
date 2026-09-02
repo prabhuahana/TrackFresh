@@ -1,0 +1,11 @@
+{
+  "name": "trackfresh",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "@mistralai/mistralai": "^2.6.4"
+  }
+}
