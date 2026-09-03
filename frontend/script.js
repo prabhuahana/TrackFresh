@@ -11,24 +11,31 @@ function saveFoods(foods) {
 function normalizeStoredFoodData() {
   const foods = getFoods();
   let changed = false;
+  let i;
 
-  foods.forEach(function (food) {
+  for (i = 0; i < foods.length; i++) {
+    const food = foods[i];
     const nextEmoji = foodEmoji(food.name);
+    
     if (food.emoji !== nextEmoji) {
       food.emoji = nextEmoji;
       changed = true;
     }
+    
     if (!food.category) {
       food.category = guessCategory(food.name);
       changed = true;
     }
+    
     if (!food.purchaseDate) {
       food.purchaseDate = todayStr();
       changed = true;
     }
-  });
+  }
 
-  if (changed) saveFoods(foods);
+  if (changed) {
+    saveFoods(foods);
+  }
 }
 
 function getShoppingList() {
@@ -56,8 +63,20 @@ function getDefaultProfile() {
 }
 
 function getProfile() {
-  const stored = JSON.parse(localStorage.getItem("profile"));
-  return Object.assign(getDefaultProfile(), stored || {});
+  const defaultProfile = getDefaultProfile();
+  const stored = localStorage.getItem("profile");
+  const storedProfile = JSON.parse(stored);
+  
+  // Merge stored profile with defaults
+  let profile = defaultProfile;
+  if (storedProfile) {
+    let key;
+    for (key in storedProfile) {
+      profile[key] = storedProfile[key];
+    }
+  }
+  
+  return profile;
 }
 
 function saveProfile(profile) {
@@ -145,12 +164,26 @@ function todayStr() { return new Date().toISOString().split("T")[0]; }
 
 function foodEmoji(name) {
   const n = (name || "").toLowerCase().trim();
-  if (!n) return "F";
-  const parts = n.split(/\s+/).filter(Boolean);
-  const initials = parts.slice(0, 2).map(function (part) {
-    return part.charAt(0).toUpperCase();
-  });
-  return initials.join("") || "F";
+  
+  if (!n) {
+    return "F";
+  }
+  
+  const parts = n.split(" ");
+  let initials = "";
+  let i;
+  
+  for (i = 0; i < parts.length && i < 2; i++) {
+    if (parts[i]) {
+      initials = initials + parts[i].charAt(0).toUpperCase();
+    }
+  }
+  
+  if (!initials) {
+    return "F";
+  }
+  
+  return initials;
 }
 
 function guessCategory(name) {
@@ -245,9 +278,17 @@ function changePassword() {
 
 function highlightNav() {
   const page = window.location.pathname.split("/").pop();
-  document.querySelectorAll("nav a, .profile-link").forEach(function (link) {
-    if (link.getAttribute("href") === page) link.classList.add("active");
-  });
+  const links = document.querySelectorAll("nav a, .profile-link");
+  let i;
+  
+  for (i = 0; i < links.length; i++) {
+    const link = links[i];
+    const href = link.getAttribute("href");
+    
+    if (href === page) {
+      link.classList.add("active");
+    }
+  }
 }
 
 /* ── Quantity check ── */
@@ -321,13 +362,34 @@ function markUsed(index) {
 }
 
 function addToShoppingFromPantry(index) {
-  const item = getFoods()[index];
-  if (!item) return;
+  const foods = getFoods();
+  const item = foods[index];
+  
+  if (!item) {
+    return;
+  }
+  
   const list = getShoppingList();
-  if (!list.some(function (s) { return s.name.toLowerCase() === item.name.toLowerCase(); })) {
-    list.push({ name: item.name, checked: false, fromFavourite: false });
+  let found = false;
+  let i;
+  
+  // Check if item already in shopping list
+  for (i = 0; i < list.length; i++) {
+    if (list[i].name.toLowerCase() === item.name.toLowerCase()) {
+      found = true;
+      break;
+    }
+  }
+  
+  if (!found) {
+    list.push({
+      name: item.name,
+      checked: false,
+      fromFavourite: false
+    });
     saveShoppingList(list);
   }
+  
   alert(item.name + " added to shopping list.");
 }
 
@@ -343,9 +405,18 @@ function refreshFoodViews() {
 
 function displayFood() {
   const foodList = document.getElementById("foodList");
-  if (!foodList) return;
+  if (!foodList) {
+    return;
+  }
 
-  const foods = getFoods().slice().sort(function (a, b) { return daysLeft(a.expiry) - daysLeft(b.expiry); });
+  const allFoods = getFoods();
+  
+  // Sort foods by expiry date
+  const foods = allFoods.slice();
+  foods.sort(function (a, b) {
+    return daysLeft(a.expiry) - daysLeft(b.expiry);
+  });
+  
   foodList.innerHTML = "";
 
   if (foods.length === 0) {
@@ -353,31 +424,48 @@ function displayFood() {
     return;
   }
 
-  foods.forEach(function (food) {
-    const idx = getFoods().indexOf(food);
+  let i;
+  for (i = 0; i < foods.length; i++) {
+    const food = foods[i];
+    const idx = allFoods.indexOf(food);
     const days = daysLeft(food.expiry);
     const rotten = isRotting(food);
+    
     const div = document.createElement("div");
-    div.className = "food" + (rotten ? " rotten" : days <= 3 ? " urgent" : "");
+    div.className = "food";
+    
+    if (rotten) {
+      div.className = div.className + " rotten";
+    } else if (days <= 3) {
+      div.className = div.className + " urgent";
+    }
+
+    const emoji = food.emoji || foodEmoji(food.name);
+    const star = food.favourite ? "★" : "☆";
+    const starClass = food.favourite ? " active" : "";
+    const category = food.category || "other";
+    const expiryClassStr = expiryClass(days);
+    const expiryLabelStr = expiryLabel(days);
+    const rottenNote = rotten ? " · <strong>May be spoiling</strong>" : "";
 
     div.innerHTML =
       '<div class="food-info">' +
-        '<span class="food-emoji">' + (food.emoji || foodEmoji(food.name)) + '</span>' +
+        '<span class="food-emoji">' + emoji + '</span>' +
         '<div><h3>' + food.name +
-          ' <button class="favourite-star' + (food.favourite ? " active" : "") +
+          ' <button class="favourite-star' + starClass +
           '" onclick="toggleFavourite(' + idx + ')" title="Favourite">' +
-          (food.favourite ? "★" : "☆") + '</button></h3>' +
-        '<p>Quantity: ' + food.quantity + food.unit + ' · ' + (food.category || "other") + '</p>' +
-        '<p class="' + expiryClass(days) + '">' + expiryLabel(days) +
-          (rotten ? ' · <strong>May be spoiling</strong>' : '') + '</p></div>' +
+          star + '</button></h3>' +
+        '<p>Quantity: ' + food.quantity + food.unit + ' · ' + category + '</p>' +
+        '<p class="' + expiryClassStr + '">' + expiryLabelStr + rottenNote + '</p></div>' +
       '</div>' +
       '<div class="food-actions">' +
         '<button class="btn-small btn-outline" onclick="markUsed(' + idx + ')">Used it</button>' +
         '<button class="btn-small" onclick="addToShoppingFromPantry(' + idx + ')">+ Shop</button>' +
         '<button class="btn-small btn-danger" onclick="removeFood(' + idx + ')">Remove</button>' +
       '</div>';
+      
     foodList.appendChild(div);
-  });
+  }
 }
 
 /* ── Dashboard ── */
