@@ -79,6 +79,9 @@ function applyTheme() {
   if (p.customPeach) document.documentElement.style.setProperty("--peach", p.customPeach);
   const btn = document.getElementById("themeToggle");
   if (btn) btn.textContent = p.theme === "dark" ? "Light mode" : "Dark mode";
+  document.querySelectorAll(".theme-toggle").forEach(function (b) {
+    b.textContent = p.theme === "dark" ? "Light mode" : "Dark mode";
+  });
 }
 
 function toggleTheme() {
