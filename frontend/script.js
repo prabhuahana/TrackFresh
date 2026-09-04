@@ -99,7 +99,11 @@ function applyTheme() {
   const btn = document.getElementById("themeToggle");
   if (btn) btn.textContent = p.theme === "dark" ? "Light mode" : "Dark mode";
   document.querySelectorAll(".theme-toggle").forEach(function (b) {
-    b.textContent = p.theme === "dark" ? "Light mode" : "Dark mode";
+    if (b.classList.contains("theme-toggle-float")) {
+      b.textContent = p.theme === "dark" ? "Light" : "Dark";
+    } else {
+      b.textContent = p.theme === "dark" ? "Light mode" : "Dark mode";
+    }
   });
 }
 

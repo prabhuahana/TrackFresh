@@ -228,17 +228,17 @@ nav a.active {
 }
 
 .fact-card p {
-  margin: 0;
-  padding: 0 16px 18px;
+  margin:  0;
+  padding:  0 16px 18px;
   color: var(--text-muted);
-  font-size: 14px;
-  line-height: 1.5;
+  font-size:  14px;
+  line-height:  1.5;
 }
 
 .sidebar-footer {
   margin-top: auto;
-  padding-top: 30px;
-  border-top: 1px solid var(--border);
+  padding-top:  30px;
+  border-top:  1px solid var(--border);
 }
 
 .theme-toggle {
@@ -1291,7 +1291,7 @@ body {
     radial-gradient(circle at 96% 12%, rgba(238, 127, 43, 0.12), transparent 38%),
     radial-gradient(circle at 50% 105%, rgba(127, 167, 122, 0.09), transparent 55%),
     var(--bg);
-  background-attachment: fixed;
+
 }
 
 ::selection {
@@ -1358,15 +1358,15 @@ button:focus-visible {
   white-space: nowrap;
 }
 
-/* the theme toggle now lives as a floating bottom-left button — the old sidebar copy is no longer needed */
+/* desktop / web: the theme toggle spans the full sidebar width */
 .sidebar-footer {
-  display: none;
+  display: block;
 }
 
-/* floating theme toggle — bottom-left, always hovering */
+/* floating theme toggle — hidden on desktop/web, tiny oval bottom-right on iphone */
 .theme-toggle-float {
+  display: none;
   position: fixed;
-
   left:  18px;
   bottom:  18px;
   z-index:  40;
@@ -1570,7 +1570,7 @@ textarea:focus
 .points-card 
  {
   background: 
-     radial-gradient(circle at rotate 85% 15%, rgba(238, 127, 43, 0.16), transparent 50%),
+     radial-gradient(circle at 85% 15%, rgba(238, 127, 43, 0.16), transparent 50%),
      var(--surface);
 }
 
@@ -1664,7 +1664,7 @@ textarea:focus
  {
   border-radius:  26px;
    background: 
-     radial-gradient(circle at rotate 100% 0%, rgba(238, 127, 43, 0.12), transparent 42%),
+     radial-gradient(circle at 100% 0%, rgba(238, 127, 43, 0.12), transparent 42%),
      var(--surface);
 }
 
@@ -1697,48 +1697,80 @@ textarea:focus
  {
   background:  var(--accent-dark);
 }
+
+/* == Responsive web design (iPhone & small screens) ==
+   ONE media query, placed last so it cleanly wins the cascade. */
+
 @media (max-width: 800px) {
+  /* never scroll sideways, kill the fixed blob background on iOS */
+  html,
+  body {
+    overflow-x: hidden;
+  }
+
+  body {
+    background-attachment: scroll;
+  }
+
+  img {
+    max-width: 100%;
+  }
+
+  /* layout stacks: content on top, tab bar floats at the bottom */
   .layout {
     flex-direction: column;
   }
 
+  main {
+    width: 100%;
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 12px 14px calc(112px + env(safe-area-inset-bottom));
+  }
+
+  /* sidebar becomes a floating iOS-style pill tab bar */
   aside {
     position: fixed;
-    z-index:  30;
-    left:  50%;
-    bottom:  10px;
+    z-index: 30;
+    left: 50%;
+    bottom: 10px;
     transform: translateX(-50%);
     width: calc(100% - 20px);
-    max-width:  440px;
-    min-height:  0;
-    padding:  8px;
-    border:  1px solid var(--border);
-    border-radius:  24px;
+    max-width: 440px;
+    min-height: 0;
+    padding: 6px;
+    border: 1px solid var(--border);
+    border-radius: 24px;
     background: var(--surface);
-    box-shadow:  0 10px 30px rgba(0, 0, 0, 0.25);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
   }
 
   aside h1 {
     display: none;
   }
 
+  .sidebar-footer {
+    display: none;
+  }
+
   nav {
     display: grid;
-    grid-template-columns: repeat(5,  1fr);
-    gap:  4px;
-    width:  100%;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 4px;
+    width: 100%;
   }
 
   nav a {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap:  4px;
-    padding:  8px 2px;
-    font-size:  11px;
-    font-weight:  700;
-    border-radius:  16px;
-    min-height:  unset;
+    gap: 2px;
+    min-width: 0;
+    padding: 5px 0;
+    font-size: 0; /* icons only, so it can never wrap onto 2 lines */
+    font-weight: 700;
+    border-radius: 16px;
+    min-height: unset;
     text-align: center;
     transform: none;
   }
@@ -1750,46 +1782,218 @@ textarea:focus
   }
 
   nav a img {
-    width:  26px;
-    height:  26px;
-    border-radius:  0;
+    width: 22px;
+    height: 22px;
+    border-radius: 0;
     background: none;
-    padding:  0;
+    padding: 0;
     filter: none;
   }
 
-  .sidebar-footer {
-    display: none;
+  /* tiny oval light/dark button, bottom-right above the tab bar */
+  .theme-toggle-float {
+    display: inline-flex;
+    right: 12px;
+    left: auto;
+    bottom: calc(92px + env(safe-area-inset-bottom));
+    padding: 3px 10px;
+    font-size: 10px;
   }
 
-  main {
-    width:  100%;
-    padding:  16px 16px calc(140px + env(safe-area-inset-bottom));
-    max-width:  500px;
-    margin:  0 auto;
-  }
-
+  /* topbar */
   .topbar {
-    width:  100%;
-    height:  60px;
-    margin:  0 0 16px;
-    padding:  0;
+    width: 100%;
+    height: 56px;
+    margin: 0 0 12px;
+    padding: 0;
     border: none;
   }
 
-  .theme-toggle-float {
-    left:  14px;
-    bottom:   calc(106px + env(safe-area-inset-bottom));
-    padding:  8px 12px;
-    font-size:  12px;
+  .topbar-actions {
+    gap: 6px;
   }
 
+  .brand-logo {
+    height: 32px;
+  }
+
+  /* headers and sections */
+  header h2 {
+    font-size: 26px;
+  }
+
+  header p {
+    font-size: 13px;
+    max-width: 100%;
+  }
+
+  section {
+    margin-top: 16px;
+    padding: 16px;
+    border-radius: 16px;
+  }
+
+  section:hover {
+    transform: none;
+  }
+
+  section h3 {
+    font-size: 17px;
+  }
+
+  .section-header {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  /* dashboard cards */
   .tile-grid {
-    grid-template-columns: repeat(2,  1fr);
+    grid-template-columns: repeat(2, 1fr);
   }
 
   .home-grid {
-    grid-template-columns:  1fr;
-    gap:  16px;
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .home-card {
+    min-height: auto;
+    padding: 16px;
+    border-radius: 18px;
+    margin-top: 0;
+  }
+
+  .home-card:hover {
+    transform: none;
+    box-shadow: var(--tile-shadow);
+  }
+
+  .home-card h2 {
+    font-size: 18px;
+  }
+
+  .home-card .empty-state {
+    margin-top: 16px;
+  }
+
+  .badge {
+    min-width: auto;
+    height: 24px;
+    padding: 0 10px;
+    font-size: 11px;
+  }
+
+  .see-more {
+    right: 14px;
+    bottom: 12px;
+  }
+
+  .points-big {
+    font-size: 40px;
+  }
+
+  .points-card {
+    padding: 12px;
+  }
+
+  /* tiles and food facts */
+  .tile {
+    padding: 16px 10px;
+  }
+
+  .tile-icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .facts-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .fact-card {
+    min-height: auto;
+  }
+
+  /* recipes */
+  .recipe-card-header {
+    flex-direction: column;
+  }
+
+  .recipe-img {
+    width: 100%;
+    height: auto;
+  }
+
+  .meal-btn {
+    width: 100%;
+    padding: 12px 10px;
+    text-align: center;
+  }
+
+  .meal-buttons {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  /* login and signup */
+  .login-card {
+    padding: 24px 20px;
+  }
+
+  .login-card h1 {
+    font-size: 28px;
+  }
+
+  /* banners, forms, lists */
+  .notif-banner {
+    padding: 10px 12px;
+  }
+
+  .notif-banner p {
+    font-size: 12px;
+  }
+
+  input,
+  select,
+  textarea {
+    font-size: 16px; /* stops iOS zooming the page when you tap a field */
+    padding: 12px;
+    border-radius: 12px;
+  }
+
+  .quantity-row {
+    gap: 8px;
+  }
+
+  .quantity-row input,
+  .quantity-row select {
+    min-width: 0;
+    flex: 1 1 0;
+  }
+
+  .food {
+    padding: 10px 6px;
+    gap: 8px;
+  }
+
+  .food-emoji {
+    width: 38px;
+    height: 38px;
+    font-size: 17px;
+  }
+
+  .reminder-item,
+  .shopping-item {
+    padding: 12px 10px;
+    font-size: 13px;
+  }
+
+  .shopping-list-card .card-header h3 {
+    font-size: 16px;
+  }
+
+  .add-item-row input {
+    max-width: 100%;
   }
 }
