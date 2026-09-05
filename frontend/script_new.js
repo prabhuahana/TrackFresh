@@ -822,20 +822,22 @@ async function readJsonResponse(response) {
   }
 }
 
-/* ── Mistral AI recipe ideas ────────────────────────────────────────────
-   Paste your Mistral API key below (get one at https://console.mistral.ai).
-   NOTE: a key in front-end code is visible to anyone who opens devtools —
-   fine for a demo/school project. For production, keep the key on a small
-   backend proxy and call that instead of the API directly.               */
-const MISTRAL_API_KEY = "7asHcacTlnQzwc0RxEQcwfqzyeaOErYt"; // <-- configured (paste a new key here to rotate)
-const MISTRAL_API_URL = "https://api.mistral.ai/v1/chat/completions";
-const MISTRAL_MODEL = "mistral-small-latest"; // or "mistral-tiny"
+/* === Google Custom Search AI recipe suggester ===
+   Searches Google for real recipes matching your on-hand inventory. Get a
+   key at https://console.cloud.google.com/apis/credentials and a Custom
+   Search Engine ID at https://cse.google.com/cse/all */
+const GOOGLE_API_KEY = "YOUR_GOOGLE_API_KEY_HERE";
+const GOOGLE_SEARCH_CX = "YOUR_CSE_ID_HERE";
+const GOOGLE_API_URL = "https://www.googleapis.com/customsearch/v1";
+
+let _aiRunning = false;
 
 async function generateAiRecipes() {
   const button = document.getElementById("aiRecipeButton");
   const status = document.getElementById("aiRecipeStatus");
   const container = document.getElementById("aiRecipeList");
   if (!button || !status || !container) return;
+  if (_aiRunning) return;
 
   const inventory = getFoods().map(function (food) {
     return food.name + (food.quantity ? " (" + food.quantity + (food.unit ? " " + food.unit : "") + ")" : "");
@@ -844,96 +846,88 @@ async function generateAiRecipes() {
     status.textContent = "Add groceries in Inventory first.";
     return;
   }
-  if (MISTRAL_API_KEY === "YOUR_API_KEY_HERE") {
-    status.textContent = "Add your Mistral API key (MISTRAL_API_KEY) to unlock AI recipes.";
+  if (GOOGLE_API_KEY === "YOUR_GOOGLE_API_KEY_HERE" || GOOGLE_SEARCH_CX === "YOUR_CSE_ID_HERE") {
+    status.textContent = "Paste your Google API key + CSE ID into the script to unlock AI recipes.";
     return;
   }
 
+  _aiRunning = true;
   button.disabled = true;
-  status.textContent = "Cooking up ideas from your groceries...";
+  button.textContent = "Searching for recipes...";
+  status.textContent = "Finding recipes from your groceries...";
   container.innerHTML = "";
 
-  const prompt =
-    "I have these ingredients in my kitchen: " + inventory.join(", ") + ". " +
-    "Suggest 3 quick, creative recipes I can make (assume basic pantry staples " +
-    "like salt, pepper, oil and water are available). " +
-    'Reply with ONLY valid JSON in this exact shape, no markdown: ' +
-    '{"recipes": [{"name": "...", "description": "...", "time": "...", ' +
-    '"ingredients": ["..."], "steps": ["..."]}]}';
+  const query = inventory.join(", ") + " recipe";
+  const controller = new AbortController();
+  const timeoutId = setTimeout(function() { controller.abort(); }, 30000);
+  const apiUrl = GOOGLE_API_URL + "?key=" + encodeURIComponent(GOOGLE_API_KEY) + "&cx=" + encodeURIComponent(GOOGLE_SEARCH_CX) + "&q=" + encodeURIComponent(query) + "&num=8";
 
   try {
-    const response = await fetch(MISTRAL_API_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer " + MISTRAL_API_KEY
-      },
-      body: JSON.stringify({
-        model: MISTRAL_MODEL,
-        temperature: 0.7,
-        messages: [
-          { role: "system", content: "You are a helpful cooking assistant. Always reply with valid JSON only, no markdown fences." },
-          { role: "user", content: prompt }
-        ]
-      })
-    });
+    const response = await fetch(apiUrl, { signal: controller.signal });
+    const rawText = await response.text();
 
-    const data = await readJsonResponse(response);
     if (!response.ok) {
-      const apiMessage = (data.message || (data.error && data.error.message)) || "";
-      throw new Error(apiMessage || "Mistral request failed (" + response.status + ").");
+      let errorData = {};
+      try { errorData = JSON.parse(rawText); } catch (_) { /* not JSON */ }
+      console.error("Google API Error Status:", response.status, errorData, rawText);
+      const apiMessage = (errorData.error && errorData.error.message) || "";
+      throw new Error(apiMessage || "Google search failed (HTTP " + response.status + ").");
     }
 
-    /* Mistral replies with a JSON string inside choices[0].message.content */
-    const raw = data.choices && data.choices[0] && data.choices[0].message ? data.choices[0].message.content : "";
-    let parsed;
-    try {
-      parsed = JSON.parse(raw);
-    } catch (e) {
-      const match = raw.match(/\{[\s\S]*\}/); /* tolerate stray code fences */
-      if (!match) throw new Error("Mistral returned an unexpected reply. Please try again.");
-      parsed = JSON.parse(match[0]);
+    let data;
+    try { data = JSON.parse(rawText); }
+    catch (e) {
+      console.error("Could not parse Google JSON body:", rawText);
+      throw new Error("Google returned an unexpected reply. Please try again.");
     }
 
-    const recipes = parsed.recipes || [];
-    if (recipes.length === 0) throw new Error("Mistral did not return any recipes. Please try again.");
+    const items = (data.items || []).slice(0, 8);
+    if (items.length === 0) {
+      status.textContent = "No recipes found. Try adding more ingredients.";
+      return;
+    }
 
-    recipes.forEach(function (recipe) {
+    items.forEach(function (item) {
       const card = document.createElement("article");
       card.className = "recipe-card ai-recipe-card";
-      const title = document.createElement("h4");
-      title.textContent = recipe.name || "Untitled recipe";
+
+      const link = document.createElement("a");
+      link.href = item.link;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      link.textContent = item.title;
+      link.className = "ai-recipe-title";
+
       const description = document.createElement("p");
-      description.textContent = recipe.description || "";
-      const time = document.createElement("p");
-      time.textContent = "Time: " + (recipe.time || "—");
-      const ingredients = document.createElement("p");
-      ingredients.textContent = "Ingredients: " + (recipe.ingredients || []).join(", ");
-      const steps = document.createElement("p");
-      steps.textContent = "Steps: " + (recipe.steps || []).join(" ");
-      steps.hidden = true;
-      const viewButton = document.createElement("button");
-      viewButton.className = "btn-small btn-outline";
-      viewButton.textContent = "View recipe";
-      viewButton.onclick = function () {
-        steps.hidden = !steps.hidden;
-        viewButton.textContent = steps.hidden ? "View recipe" : "Hide recipe";
-      };
-      card.append(title, description, time, ingredients, viewButton, steps);
+      description.className = "ai-recipe-desc";
+      description.textContent = (item.pagemap && item.pagemap.metatags && item.pagemap.metatags[0] && item.pagemap.metatags[0]["og:description"]) || item.snippet || "A recipe using your inventory ingredients.";
+
+      const badge = document.createElement("span");
+      badge.className = "ai-recipe-badge";
+      badge.textContent = "Google";
+
+      card.appendChild(badge);
+      card.appendChild(link);
+      card.appendChild(description);
       container.appendChild(card);
     });
-    status.textContent = "Here are some AI ideas for your groceries.";
+
+    status.textContent = "Found " + items.length + " recipe" + (items.length > 1 ? "s" : "") + " from your groceries.";
   } catch (error) {
-    if (error.name === "TypeError") {
-      status.textContent = "Could not reach Mistral (network or CORS blocked the request). If this persists, route the call through a small backend proxy.";
+    if (error.name === "AbortError") {
+      status.textContent = "Request timed out after 30 seconds. Please try again.";
+    } else if (error.name === "TypeError") {
+      status.textContent = "Could not reach Google (network or CORS blocked the request).";
     } else {
-      status.textContent = error.message || "Something went wrong while getting recipe ideas.";
+      status.textContent = error.message || "Something went wrong while finding recipes.";
     }
   } finally {
+    clearTimeout(timeoutId);
+    _aiRunning = false;
     button.disabled = false;
+    button.textContent = "Get AI recipe ideas";
   }
 }
-
 function addRecipeToShopping(recipeName) {
   const recipe = RECIPES.find(function (r) { return r.name === recipeName; });
   if (!recipe) return;

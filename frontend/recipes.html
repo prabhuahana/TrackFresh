@@ -50,7 +50,7 @@ END
 <section class="ai-recipe-section">
   <h3>New ideas from your groceries</h3>
   <p id="aiRecipeStatus">Ask Mistral for recipes using what is in your inventory.</p>
-  <button id="aiRecipeButton" onclick="generateAiRecipes()">Get AI recipe ideas</button>
+    <button id="aiRecipeButton">Get AI recipe ideas</button>
   <div id="aiRecipeList"></div>
 </section>
 <section>
@@ -59,6 +59,9 @@ END
 </section>
 </main>
 </div>
+<script>
+  document.getElementById('aiRecipeButton').addEventListener('click', generateAiRecipes);
+</script>
 <script src="data.js"></script>
 <script src="script.js"></script>
 </body>

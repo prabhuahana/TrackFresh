@@ -2677,6 +2677,24 @@ input.input-invalid {
   display: none;
 }
 
+/* Google Custom Search recipe card extras */
+.ai-recipe-title {
+  display: block;
+  text-decoration: none;
+  color: var(--text);
+  font-weight: 700;
+  font-size: 18px;
+  padding: 10px 14px 0;
+}
+
+.ai-recipe-title:hover {
+  color: var(--accent-dark);
+}
+
+.ai-recipe-desc {
+  padding: 4px 14px 14px;
+}
+
 [data-theme="dark"] .ai-recipe-card {
   border-color: var(--accent);
   background: linear-gradient(160deg, var(--surface) 0%, rgba(127, 167, 122, 0.12) 140%);
