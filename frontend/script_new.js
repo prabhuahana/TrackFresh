@@ -481,6 +481,12 @@ function displayFood() {
 /* ── Dashboard ── */
 
 function loadDashboard() {
+  if (document.getElementById("expiryList") || document.getElementById("fridgeCarousel")) {
+    loadHomeExpiry();
+    loadFridgeCarousel();
+    updatePointsDisplay();
+    return;
+  }
   if (!document.getElementById("dashboardFood")) return;
 
   loadRottingSection();
@@ -489,6 +495,95 @@ function loadDashboard() {
   loadSeasonalTip();
   updatePointsDisplay();
 }
+
+/* ── Home screen (mobile mockup) renders ── */
+
+function dashExpiryTier(days) {
+  if (days <= 2) return "critical"; /* within 2 days */
+  if (days <= 7) return "medium";   /* around a week */
+  return "low";                     /* 3+ weeks / later */
+}
+
+function dashExpiryLabel(days) {
+  if (days < 0) return Math.abs(days) + "d overdue";
+  if (days === 0) return "Today";
+  if (days === 1) return "1 day";
+  return days + " days";
+}
+
+function formatExpiryDate(dateStr) {
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return dateStr || "";
+  const day = d.getDate();
+  const suffix = (day % 10 === 1 && day !== 11) ? "st"
+    : (day % 10 === 2 && day !== 12) ? "nd"
+    : (day % 10 === 3 && day !== 13) ? "rd" : "th";
+  const months = ["January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"];
+  return day + suffix + " " + months[d.getMonth()] + " " + String(d.getFullYear()).slice(2);
+}
+
+function loadHomeExpiry() {
+  const wrap = document.getElementById("expiryList");
+  if (!wrap) return;
+  const foods = getFoods().slice().sort(function (a, b) { return daysLeft(a.expiry) - daysLeft(b.expiry); });
+  wrap.innerHTML = "";
+  if (!foods.length) {
+    wrap.innerHTML = '<p class="empty-state">No items tracked yet.</p>';
+    return;
+  }
+  foods.slice(0, 5).forEach(function (food) {
+    const days = daysLeft(food.expiry);
+    const tier = dashExpiryTier(days);
+    const row = document.createElement("div");
+    row.className = "expiry-row";
+    row.innerHTML =
+      '<span class="expiry-dot exp-dot-' + tier + '" aria-hidden="true"></span>' +
+      '<strong class="expiry-name">' + food.name + '</strong>' +
+      '<span class="exp-pill exp-' + tier + '">' + dashExpiryLabel(days) + '</span>';
+    wrap.appendChild(row);
+  });
+}
+
+function loadFridgeCarousel() {
+  const wrap = document.getElementById("fridgeCarousel");
+  if (!wrap) return;
+  const foods = getFoods();
+  wrap.innerHTML = "";
+  if (!foods.length) {
+    wrap.innerHTML = '<p class="empty-state">Your fridge is empty.</p>';
+    return;
+  }
+  foods.forEach(function (food) {
+    const card = document.createElement("a");
+    card.className = "fridge-card";
+    card.href = "inventory.html";
+    const qty = food.quantity || 1;
+    card.innerHTML =
+      '<div class="fridge-thumb"><span>' + (food.emoji || foodEmoji(food.name)) + '</span></div>' +
+      '<p class="fridge-name">' + food.name + '</p>' +
+      '<p class="fridge-sub">' + qty + ' | ' + formatExpiryDate(food.expiry) + '</p>';
+    wrap.appendChild(card);
+  });
+}
+
+function toggleUserMenu(event) {
+  if (event) event.stopPropagation();
+  const menu = document.getElementById("userMenu");
+  if (menu) menu.classList.toggle("open");
+}
+
+function logoutUser() {
+  window.location.href = "index.html";
+}
+
+/* close the avatar dropdown when tapping anywhere else */
+document.addEventListener("click", function (event) {
+  const menu = document.getElementById("userMenu");
+  if (menu && menu.classList.contains("open") && !event.target.closest(".user-menu-wrap")) {
+    menu.classList.remove("open");
+  }
+});
 
 function loadRottingSection() {
   const el = document.getElementById("rottingFood");
@@ -727,6 +822,15 @@ async function readJsonResponse(response) {
   }
 }
 
+/* ── Mistral AI recipe ideas ────────────────────────────────────────────
+   Paste your Mistral API key below (get one at https://console.mistral.ai).
+   NOTE: a key in front-end code is visible to anyone who opens devtools —
+   fine for a demo/school project. For production, keep the key on a small
+   backend proxy and call that instead of the API directly.               */
+const MISTRAL_API_KEY = "7asHcacTlnQzwc0RxEQcwfqzyeaOErYt"; // <-- configured (paste a new key here to rotate)
+const MISTRAL_API_URL = "https://api.mistral.ai/v1/chat/completions";
+const MISTRAL_MODEL = "mistral-small-latest"; // or "mistral-tiny"
+
 async function generateAiRecipes() {
   const button = document.getElementById("aiRecipeButton");
   const status = document.getElementById("aiRecipeStatus");
@@ -734,39 +838,79 @@ async function generateAiRecipes() {
   if (!button || !status || !container) return;
 
   const inventory = getFoods().map(function (food) {
-    return { name: food.name, quantity: food.quantity, unit: food.unit };
+    return food.name + (food.quantity ? " (" + food.quantity + (food.unit ? " " + food.unit : "") + ")" : "");
   });
   if (inventory.length === 0) {
     status.textContent = "Add groceries in Inventory first.";
     return;
   }
+  if (MISTRAL_API_KEY === "YOUR_API_KEY_HERE") {
+    status.textContent = "Add your Mistral API key (MISTRAL_API_KEY) to unlock AI recipes.";
+    return;
+  }
 
   button.disabled = true;
-  status.textContent = "Making ideas from your groceries...";
+  status.textContent = "Cooking up ideas from your groceries...";
   container.innerHTML = "";
 
-  try {
-    const response = await fetch("/api/recipes", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ inventory: inventory })
-    });
-    const data = await readJsonResponse(response);
-    if (!response.ok) throw new Error(data.error || "Could not get recipes.");
+  const prompt =
+    "I have these ingredients in my kitchen: " + inventory.join(", ") + ". " +
+    "Suggest 3 quick, creative recipes I can make (assume basic pantry staples " +
+    "like salt, pepper, oil and water are available). " +
+    'Reply with ONLY valid JSON in this exact shape, no markdown: ' +
+    '{"recipes": [{"name": "...", "description": "...", "time": "...", ' +
+    '"ingredients": ["..."], "steps": ["..."]}]}';
 
-    data.recipes.forEach(function (recipe) {
+  try {
+    const response = await fetch(MISTRAL_API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + MISTRAL_API_KEY
+      },
+      body: JSON.stringify({
+        model: MISTRAL_MODEL,
+        temperature: 0.7,
+        messages: [
+          { role: "system", content: "You are a helpful cooking assistant. Always reply with valid JSON only, no markdown fences." },
+          { role: "user", content: prompt }
+        ]
+      })
+    });
+
+    const data = await readJsonResponse(response);
+    if (!response.ok) {
+      const apiMessage = (data.message || (data.error && data.error.message)) || "";
+      throw new Error(apiMessage || "Mistral request failed (" + response.status + ").");
+    }
+
+    /* Mistral replies with a JSON string inside choices[0].message.content */
+    const raw = data.choices && data.choices[0] && data.choices[0].message ? data.choices[0].message.content : "";
+    let parsed;
+    try {
+      parsed = JSON.parse(raw);
+    } catch (e) {
+      const match = raw.match(/\{[\s\S]*\}/); /* tolerate stray code fences */
+      if (!match) throw new Error("Mistral returned an unexpected reply. Please try again.");
+      parsed = JSON.parse(match[0]);
+    }
+
+    const recipes = parsed.recipes || [];
+    if (recipes.length === 0) throw new Error("Mistral did not return any recipes. Please try again.");
+
+    recipes.forEach(function (recipe) {
       const card = document.createElement("article");
       card.className = "recipe-card ai-recipe-card";
       const title = document.createElement("h4");
-      title.textContent = recipe.name;
+      title.textContent = recipe.name || "Untitled recipe";
       const description = document.createElement("p");
-      description.textContent = recipe.description;
+      description.textContent = recipe.description || "";
       const time = document.createElement("p");
-      time.textContent = "Time: " + recipe.time;
+      time.textContent = "Time: " + (recipe.time || "—");
       const ingredients = document.createElement("p");
-      ingredients.textContent = "Ingredients: " + recipe.ingredients.join(", ");
+      ingredients.textContent = "Ingredients: " + (recipe.ingredients || []).join(", ");
       const steps = document.createElement("p");
-      steps.textContent = "Steps: " + recipe.steps.join(" ");
+      steps.textContent = "Steps: " + (recipe.steps || []).join(" ");
       steps.hidden = true;
       const viewButton = document.createElement("button");
       viewButton.className = "btn-small btn-outline";
@@ -778,9 +922,13 @@ async function generateAiRecipes() {
       card.append(title, description, time, ingredients, viewButton, steps);
       container.appendChild(card);
     });
-    status.textContent = "Here are some ideas for your groceries.";
+    status.textContent = "Here are some AI ideas for your groceries.";
   } catch (error) {
-    status.textContent = error.message || "Something went wrong while getting recipe ideas.";
+    if (error.name === "TypeError") {
+      status.textContent = "Could not reach Mistral (network or CORS blocked the request). If this persists, route the call through a small backend proxy.";
+    } else {
+      status.textContent = error.message || "Something went wrong while getting recipe ideas.";
+    }
   } finally {
     button.disabled = false;
   }

@@ -55,6 +55,17 @@ body {
   background: var(--bg);
 }
 
+/* never allow sideways page scrolling — horizontal scrolling lives only
+   inside designated containers (e.g. the fridge carousel) */
+html,
+body {
+  overflow-x: hidden;
+}
+
+main {
+  min-width: 0; /* let flex/grid content shrink instead of overflowing */
+}
+
 /* SIDEBAR */
 
 aside {
@@ -1357,37 +1368,31 @@ button:focus-visible {
   box-shadow:  0 6px 18px rgba(238, 127, 43, 0.55);
 }
 
-/* compact toggle that lived in the top bar (no longer used — kept harmless) */
-.theme-toggle-topbar {
-  padding: 7px 14px;
-  font-size:  12px;
-  white-space: nowrap;
-}
-
 /* desktop / web: the theme toggle spans the full sidebar width */
 .sidebar-footer {
   display: block;
 }
 
-/* floating theme toggle — hidden on desktop/web, tiny oval bottom-right on iphone */
+/* floating theme toggle — the MOBILE control: compact pill pinned bottom-right,
+   above the fixed tab bar. Hidden on desktop/web where the sidebar toggle lives. */
 .theme-toggle-float {
   display: none;
   position: fixed;
-  left:  18px;
-  bottom:  18px;
-  z-index:  40;
-  box-shadow:  0 4px 14px rgba(0, 0, 0, 0.25);
+  left: auto;
+  right: 16px;
+  bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+  z-index: 1100;
+  border-radius: 999px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
 }
 
-/* compact theme toggle inside the top header (mobile position) */
-.theme-toggle-topbar {
-  display: none;
-  width: auto;
-  padding: 7px 14px;
-  font-size: 12px;
-  font-weight: 700;
-  border-radius: 999px;
-  white-space: nowrap;
+/* login/signup pages have no sidebar: keep their toggle visible on desktop too */
+.theme-toggle-float-top {
+  display: inline-flex;
+  top: 14px;
+  right: 14px;
+  left: auto;
+  bottom: auto;
 }
 
 .topbar-actions {
@@ -1752,21 +1757,25 @@ textarea:focus
     box-sizing: border-box;
   }
 
-  /* sidebar becomes a floating iOS-style pill tab bar */
+  /* sidebar becomes a solid, edge-to-edge bottom nav bar (no floating pill) */
   aside {
     position: fixed;
-    z-index: 30;
-    left: 50%;
-    bottom: calc(8px + env(safe-area-inset-bottom));
-    transform: translateX(-50%);
-    width: calc(100% - 20px);
-    max-width: 440px;
+    z-index: 1000;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    max-width: none;
     min-height: 0;
-    padding: 6px;
-    border: 1px solid var(--border);
-    border-radius: 24px;
+    margin: 0;
+    padding: 6px 10px;
+    padding-bottom: calc(6px + env(safe-area-inset-bottom, 12px));
+    border: none;
+    border-top: 1px solid var(--border);
+    border-radius: 0;
     background: var(--surface);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+    box-shadow: none;
+    min-height: 64px;
+    box-sizing: border-box;
   }
 
   aside h1 {
@@ -1777,9 +1786,12 @@ textarea:focus
     display: none;
   }
 
+  /* buttons spread evenly across the full bar width */
   nav {
-    display: grid;
-    grid-template-columns: repeat(6, 1fr); /* 6 links: Home..Food Facts, one row */
+    display: flex;
+    flex-direction: row; /* one horizontal row — the base sidebar rule is column */
+    justify-content: space-around;
+    align-items: center;
     gap: 2px;
     width: 100%;
   }
@@ -1788,12 +1800,13 @@ textarea:focus
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 2px;
+    gap: 3px;
+    flex: 1 1 0;
     min-width: 0;
-    padding: 5px 0;
+    padding: 6px 0;
     font-size: 0; /* icons only, so it can never wrap onto 2 lines */
     font-weight: 700;
-    border-radius: 16px;
+    border-radius: 12px;
     min-height: unset;
     text-align: center;
     transform: none;
@@ -1806,35 +1819,33 @@ textarea:focus
   }
 
   nav a img {
-    width: 22px;
-    height: 22px;
+    width: 30px;
+    height: 30px;
     border-radius: 0;
     background: none;
     padding: 0;
     filter: none;
   }
 
-  /* theme toggle lives in the top header on mobile: never collides with the tab bar */
+  /* floating toggle on every page: compact pill above the 64px tab bar */
   .theme-toggle-float {
-    display: none;
-  }
-
-  .theme-toggle-topbar {
     display: inline-flex;
-    width: auto;
-    padding: 6px 14px;
-    font-size: 12px;
-  }
-
-  /* login/signup have no topbar: their toggle sits in the top-right corner */
-  .theme-toggle-float-top {
-    display: inline-flex;
-    top: 14px;
-    right: 14px;
     left: auto;
-    bottom: auto;
-    padding: 5px 12px;
-    font-size: 11px;
+    right: 16px;
+    bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+    z-index: 1100;
+    width: auto;
+    padding: 10px 16px;
+    font-size: 13px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+  }
+
+  /* login/signup have no tab bar: their pill sits closer to the edge */
+  .theme-toggle-float-top {
+    top: auto;
+    bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+    padding: 8px 14px;
+    font-size: 12px;
   }
 
   /* topbar */
@@ -1853,7 +1864,11 @@ textarea:focus
   }
 
   .brand-logo {
-    height: 32px;
+    width: 150px;
+    max-width: 160px;
+    height: 38px;
+    object-fit: cover;
+    object-position: center;
   }
 
   /* headers and sections */
@@ -2053,14 +2068,26 @@ textarea:focus
 /* 1 ── Sidebar stays pinned on screen while the page scrolls (desktop/web).
       Mobile keeps its fixed bottom tab bar from the media query above. */
 @media (min-width: 769px) {
+  /* sidebar is permanently pinned to the viewport. position: fixed (not
+     sticky) because the global overflow-x: hidden on html/body breaks
+     sticky positioning in most browsers. */
   aside {
-    position: sticky;
+    position: fixed;
     top: 0;
-    align-self: flex-start;
+    left: 0;
     height: 100vh;
     height: 100dvh;
+    width: 220px;
+    z-index: 1000;
+    box-sizing: border-box;
     overflow-y: auto;
     box-shadow: 6px 0 24px rgba(41, 48, 68, 0.06);
+  }
+
+  /* the fixed sidebar is out of the flex flow — shift all page content
+     beside it (220px sidebar + 20px breathing room) */
+  main {
+    margin-left: 240px;
   }
 
   /* The logo PNGs are square canvases with a wide wordmark centred inside —
@@ -2170,5 +2197,488 @@ input.input-invalid {
 
 [data-theme="dark"] input.input-invalid {
   background: rgba(224, 122, 106, 0.10);
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   DASHBOARD / HOME content
+   header + avatar menu · expiry pills · fridge carousel · quick grid.
+   The chrome (sidebar / bottom tab bar / theme toggle) uses the SAME
+   standard structure as every other page: .layout > aside + main.
+   ════════════════════════════════════════════════════════════════════ */
+
+.dash-main {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+}
+
+/* 1 ── top header: logo left, circular avatar right */
+.dash-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 4px 0 14px;
+}
+
+.dash-logo {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+/* logo PNGs are square canvases with a wide centred wordmark — crop to it */
+.dash-logo .brand-logo {
+  width: 148px;
+  height: 40px;
+  max-width: none;
+  object-fit: cover;
+  object-position: center;
+}
+
+.user-menu-wrap {
+  position: relative;
+}
+
+.avatar-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 2px solid var(--accent);
+  background: var(--green-light);
+  display: grid;
+  place-items: center;
+  padding: 6px;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.avatar-btn:hover {
+  transform: scale(1.06);
+  box-shadow: 0 4px 14px rgba(47, 79, 76, 0.2);
+}
+
+.avatar-btn img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* dropdown — neat under the avatar, above everything */
+.user-menu {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  z-index: 100;
+  min-width: 168px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: 0 14px 34px rgba(41, 48, 68, 0.18);
+  padding: 6px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-6px);
+  pointer-events: none;
+  transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s;
+}
+
+.user-menu.open {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.user-menu a {
+  display: block;
+  padding: 11px 14px;
+  border-radius: 10px;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--text);
+}
+
+.user-menu a:hover {
+  background: var(--green-light);
+  color: var(--accent-dark);
+}
+
+.user-menu a.menu-logout {
+  color: var(--danger);
+}
+
+.user-menu a.menu-logout:hover {
+  background: rgba(217, 92, 92, 0.1);
+  color: var(--danger);
+}
+
+/* 2 ── expiry card */
+.dash-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 16px 16px 10px;
+  box-shadow: 0 6px 22px rgba(41, 48, 68, 0.07);
+  margin-bottom: 18px;
+}
+
+.dash-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.dash-section-head h2 {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.dash-section-head .see-more {
+  position: static; /* cancel the legacy absolute pinning that overlapped pills */
+  right: auto;
+  bottom: auto;
+  flex-shrink: 0;
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--accent-dark);
+  text-decoration: none;
+}
+
+.expiry-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.expiry-row:last-of-type {
+  border-bottom: none;
+}
+
+/* sleek tier-coloured bullet instead of the old letter badge */
+.expiry-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.exp-dot-critical { background: var(--danger); }
+.exp-dot-medium   { background: var(--warning); }
+.exp-dot-low      { background: var(--accent); }
+
+.expiry-name {
+  flex: 1;
+  font-size: 15px;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.exp-pill {
+  flex-shrink: 0;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.exp-pill.exp-critical { background: var(--danger);  color: #ffffff; }
+.exp-pill.exp-medium   { background: var(--warning); color: #3d2c00; }
+.exp-pill.exp-low      { background: var(--accent);  color: #ffffff; }
+
+/* 3 ── fridge horizontal carousel */
+.dash-section {
+  margin-bottom: 18px;
+}
+
+.fridge-carousel {
+  display: flex;
+  overflow-x: auto;
+  gap: 12px;
+  scroll-snap-type: x mandatory;
+  padding: 4px 2px 8px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.fridge-carousel::-webkit-scrollbar {
+  display: none;
+}
+
+.fridge-carousel .fridge-card {
+  position: static; /* reset the legacy absolute-position rule above */
+  flex: 0 0 auto;
+  min-width: 130px;
+  max-width: 140px;
+  width: 130px;
+  box-sizing: border-box;
+  scroll-snap-align: start;
+  display: block;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 10px 10px 12px;
+  text-align: center;
+  text-decoration: none;
+  box-shadow: 0 4px 14px rgba(41, 48, 68, 0.07);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.fridge-carousel .fridge-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 22px rgba(41, 48, 68, 0.13);
+}
+
+.fridge-thumb {
+  width: 100%;
+  height: 70px;
+  border-radius: 12px;
+  background: var(--green-light);
+  display: grid;
+  place-items: center;
+  font-size: 30px;
+  overflow: hidden;
+}
+
+.fridge-carousel .fridge-name {
+  margin: 8px 0 2px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fridge-carousel .fridge-sub {
+  margin: 0;
+  font-size: 11px;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 4 ── 2×2 quick-action grid */
+.quick-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.quick-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 24px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  box-shadow: 0 6px 20px rgba(41, 48, 68, 0.07);
+  text-decoration: none;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.quick-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 26px rgba(41, 48, 68, 0.13);
+}
+
+.quick-card:active {
+  transform: scale(0.97);
+}
+
+.quick-icon {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+}
+
+/* theme-aware icon swap: _Dark.png artwork on light mode, _Light.png on dark */
+.quick-icon-dark { display: block; }
+.quick-icon-light { display: none; }
+[data-theme="dark"] .quick-icon-dark { display: none; }
+[data-theme="dark"] .quick-icon-light { display: block; }
+
+/* Receipt Scanning now uses the standard two-image theme swap
+   (Icon_RecipeScanning_Dark.png / Icon_RecipeScanning_Light.png),
+   so no filters are needed — it matches the green of every other icon */
+
+.quick-label {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--text);
+  text-align: center;
+}
+
+/* dark-mode surface tweaks */
+[data-theme="dark"] .dash-card,
+[data-theme="dark"] .fridge-carousel .fridge-card,
+[data-theme="dark"] .quick-card {
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .user-menu {
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.5);
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   DASHBOARD — MOBILE (≤768px)
+   The chrome (bottom pill tab bar, full-width main, toggle pill) is
+   inherited from the shared mobile block above — this only tunes the
+   dashboard's own content for small screens.
+   ════════════════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .dash-logo .brand-logo {
+    width: 150px;
+    max-width: 160px;
+    height: 38px;
+    object-fit: cover;
+    object-position: center;
+  }
+
+  .dash-section-head h2 {
+    font-size: 19px;
+  }
+
+  .quick-card {
+    padding: 20px 10px;
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   DASHBOARD — DESKTOP (≥769px)
+   The sidebar + toggle chrome is fully inherited from the shared desktop
+   block (sticky 220px aside, sidebar-footer toggle at its base) — the
+   dashboard renders the exact same sidebar as every other page.
+   Only the content grid and dashboard-specific sizing live here.
+   ════════════════════════════════════════════════════════════════════ */
+@media (min-width: 769px) {
+  /* content grid beside the sidebar: clean vertical stack — Expiry full
+     width on top, Fridge carousel beneath, quick actions at the bottom.
+     minmax(0,…) prevents any grid blowout, so the page never scrolls sideways */
+  main.dash-main {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "header"
+      "expiry"
+      "fridge"
+      "quick";
+    row-gap: 22px;
+    align-items: start;
+    align-content: start;
+  }
+
+  .dash-header { grid-area: header; }
+  .dash-card { grid-area: expiry; }
+  .dash-section.dash-fridge { grid-area: fridge; }
+  .dash-section.dash-quick { grid-area: quick; }
+
+  .dash-logo .brand-logo {
+    width: 190px;
+    height: 50px;
+  }
+
+  /* wider content: bigger fridge cards, quick actions stay a large 2×2 */
+  .fridge-carousel .fridge-card {
+    min-width: 150px;
+    max-width: 160px;
+    width: 150px;
+  }
+
+  .fridge-thumb {
+    height: 84px;
+    font-size: 36px;
+  }
+
+  .quick-grid {
+    gap: 16px;
+  }
+
+  .quick-card {
+    padding: 30px 20px;
+    min-height: 170px;
+  }
+
+  .quick-icon {
+    width: 52px;
+    height: 52px;
+  }
+
+  .quick-label {
+    font-size: 16px;
+  }
+
+  .expiry-name {
+    font-size: 16px;
+  }
+
+  .dash-section-head h2 {
+    font-size: 22px;
+  }
+}
+
+
+/* ── Mistral AI recipe idea cards ── */
+
+#aiRecipeList {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+  margin-top: 14px;
+}
+
+.ai-recipe-card {
+  position: relative;
+  border: 2px solid var(--accent);
+  background: linear-gradient(160deg, var(--surface) 0%, var(--green-light) 140%);
+  overflow: hidden;
+}
+
+.ai-recipe-card::before {
+  content: "✨ AI";
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.ai-recipe-card h4 {
+  padding-right: 60px; /* keep the title clear of the badge */
+}
+
+.ai-recipe-card p {
+  color: var(--text-muted);
+  font-size: 14px;
+  margin: 6px 0;
+  line-height: 1.5;
+}
+
+.ai-recipe-card p[hidden] {
+  display: none;
+}
+
+[data-theme="dark"] .ai-recipe-card {
+  border-color: var(--accent);
+  background: linear-gradient(160deg, var(--surface) 0%, rgba(127, 167, 122, 0.12) 140%);
 }
 

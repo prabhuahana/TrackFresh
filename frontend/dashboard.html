@@ -11,18 +11,18 @@
 <!--
 PSEUDOCODE:
 BEGIN
-  render sidebar navigation and top-level header
-  show points, inventory summary, expiring items, and rotten food alerts
-  render dashboard tiles for main app pages
-  display meal ideas based on items in pantry
-  show seasonal produce suggestions
+  show top header with logo and avatar dropdown menu
+  list items expiring soon with colour-coded time pills
+  slide fridge items horizontally
+  show quick action grid and fixed bottom tab bar
 END
 -->
+
 <div class="layout">
 <aside>
   <h1>FreshTrack</h1>
   <nav>
-    <a href="dashboard.html" class="nav-icon-home"><img src="Button_HomePage_Dark.png" alt="" class="nav-img-dark"><img src="Button_HomePage_Light.png" alt="" class="nav-img-light">Home</a>
+    <a href="dashboard.html" class="nav-icon-home active"><img src="Button_HomePage_Dark.png" alt="" class="nav-img-dark"><img src="Button_HomePage_Light.png" alt="" class="nav-img-light">Home</a>
     <a href="reminders.html" class="nav-icon-reminders"><img src="Button_ExpiryDates_Dark.png" alt="" class="nav-img-dark"><img src="Button_ExpiryDates_Light.png" alt="" class="nav-img-light">Reminders</a>
     <a href="inventory.html" class="nav-icon-inventory"><img src="Button_Fridge_Dark.png" alt="" class="nav-img-dark"><img src="Button_Fridge_Light.png" alt="" class="nav-img-light">Inventory</a>
     <a href="recipes.html" class="nav-icon-recipes"><img src="Button_Recipes_Dark.png" alt="" class="nav-img-dark"><img src="Button_Recipes_Light.png" alt="" class="nav-img-light">Recipes</a>
@@ -33,59 +33,69 @@ END
     <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">Dark mode</button>
   </div>
 </aside>
-<main>
-<div class="topbar">
-  <a class="brand" href="dashboard.html" aria-label="FreshTrack home">
-    <img src="Logo_Light.png" alt="TrackFresh" class="brand-logo brand-logo-light">
-    <img src="Logo_Dark.png" alt="TrackFresh" class="brand-logo brand-logo-dark">
-  </a>
-  <div class="topbar-actions">
-    <button class="theme-toggle theme-toggle-topbar" onclick="toggleTheme()" aria-label="Toggle dark mode">Dark</button>
-    <a class="profile-link" href="profile.html" aria-label="Open profile"><img src="Icon_Profile_Dark.png" alt="" class="nav-img-dark"><img src="Icon_Profile_Light.png" alt="" class="nav-img-light"></a>
-  </div>
-</div>
-<div class="notif-banner" id="notifBanner" style="display:none;">
-  <p>Enable reminders so you never miss an expiry date!</p>
-  <button class="btn-small" onclick="enableNotifications()">Enable</button>
-</div>
-
-<div class="home-grid">
-  <section class="home-card expiry-card">
-    <div class="home-card-heading">
-      <h2>Expiry</h2>
-      <span class="badge" id="expiringBadge">0</span>
+<main class="dash-main">
+  <header class="dash-header">
+    <a class="dash-logo" href="dashboard.html" aria-label="TrackFresh home">
+      <img src="Logo_Light.png" alt="TrackFresh" class="brand-logo brand-logo-light">
+      <img src="Logo_Dark.png" alt="TrackFresh" class="brand-logo brand-logo-dark">
+    </a>
+    <div class="user-menu-wrap">
+      <button class="avatar-btn" onclick="toggleUserMenu(event)" aria-label="Open user menu">
+        <img src="Icon_Profile_Dark.png" alt="" class="nav-img-dark">
+        <img src="Icon_Profile_Light.png" alt="" class="nav-img-light">
+      </button>
+      <div class="user-menu" id="userMenu">
+        <a href="profile.html">Profile</a>
+        <a href="profile.html">Settings</a>
+        <a href="help.html">Help</a>
+        <a href="#" class="menu-logout" onclick="logoutUser(); return false;">Log Out</a>
+      </div>
     </div>
-    <div id="expiringFood"><p class="empty-state">No items expiring soon.</p></div>
-    <a class="see-more" href="reminders.html">See more <span>›</span></a>
+  </header>
+
+  <section class="dash-card">
+    <div class="dash-section-head">
+      <h2>Expiry</h2>
+      <a class="see-more" href="reminders.html">See more <span>›</span></a>
+    </div>
+    <div id="expiryList" class="expiry-rows"><p class="empty-state">Loading…</p></div>
   </section>
 
-  <section class="home-card fridge-card">
-    <h2>Fridge</h2>
-    <div id="dashboardFood"><p class="empty-state">Your pantry is empty.</p></div>
-    <a class="see-more" href="inventory.html">See more <span>›</span></a>
+  <section class="dash-section dash-fridge">
+    <div class="dash-section-head">
+      <h2>Fridge</h2>
+      <a class="see-more" href="inventory.html">See more <span>›</span></a>
+    </div>
+    <div id="fridgeCarousel" class="fridge-carousel"></div>
   </section>
 
-  <section class="home-card recipes-card">
-    <h2>Recipes</h2>
-    <div class="meal-buttons" id="mealButtons"></div>
-    <a class="see-more" href="recipes.html">See more <span>›</span></a>
+  <section class="dash-section dash-quick">
+    <div class="quick-grid">
+      <a class="quick-card" href="recipes.html">
+        <img src="Icon_Recipes_Dark.png" alt="" class="quick-icon quick-icon-dark">
+        <img src="Icon_Recipes_Light.png" alt="" class="quick-icon quick-icon-light">
+        <span class="quick-label">Recipes</span>
+      </a>
+      <a class="quick-card" href="shopping.html">
+        <img src="Icon_ShoppingLists_Dark.png" alt="" class="quick-icon quick-icon-dark">
+        <img src="Icon_ShoppingLists_Light.png" alt="" class="quick-icon quick-icon-light">
+        <span class="quick-label">Shopping Lists</span>
+      </a>
+      <a class="quick-card" href="scan.html">
+        <img src="Icon_RecipeScanning_Dark.png" alt="" class="quick-icon quick-icon-dark">
+        <img src="Icon_RecipeScanning_Light.png" alt="" class="quick-icon quick-icon-light">
+        <span class="quick-label">Receipt Scanning</span>
+      </a>
+      <a class="quick-card" href="help.html">
+        <img src="Icon_FoodFacts_Dark.png" alt="" class="quick-icon quick-icon-dark">
+        <img src="Icon_FoodFacts_Light.png" alt="" class="quick-icon quick-icon-light">
+        <span class="quick-label">Fun Facts</span>
+      </a>
+    </div>
   </section>
-
-  <section class="home-card facts-card">
-    <h2>Fun Facts</h2>
-    <p id="seasonText">Seasonal recommendations will appear here.</p>
-    <a class="see-more" href="help.html">See more <span>›</span></a>
-  </section>
-
-  <section class="home-card shopping-card">
-    <h2>Shopping List</h2>
-    <div id="shoppingList"><p class="empty-state">Your shopping list is empty.</p></div>
-    <a class="see-more" href="shopping.html">See more <span>›</span></a>
-  </section>
-</div>
-
 </main>
 </div>
+
 <script src="data.js"></script>
 <script src="script.js"></script>
 </body>
