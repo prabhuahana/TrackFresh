@@ -99,7 +99,7 @@ function applyTheme() {
   const btn = document.getElementById("themeToggle");
   if (btn) btn.textContent = p.theme === "dark" ? "Light mode" : "Dark mode";
   document.querySelectorAll(".theme-toggle").forEach(function (b) {
-    if (b.classList.contains("theme-toggle-float")) {
+    if (b.classList.contains("theme-toggle-float") || b.classList.contains("theme-toggle-topbar")) {
       b.textContent = p.theme === "dark" ? "Light" : "Dark";
     } else {
       b.textContent = p.theme === "dark" ? "Light mode" : "Dark mode";
@@ -165,6 +165,25 @@ function expiryLabel(days) {
   return "Expires in " + days + " days";
 }
 
+/* ── Reminder urgency tiers ── */
+
+function reminderPriority(days) {
+  if (days <= 0) return "critical"; /* expiring immediately (or already expired) */
+  if (days <= 2) return "high";     /* expiring within 2 days */
+  if (days <= 7) return "medium";   /* expiring within a week */
+  return "low";                     /* more than a week away */
+}
+
+function reminderTierLabel(priority) {
+  const labels = { critical: "Critical", high: "High", medium: "Medium", low: "Low" };
+  return labels[priority] || "Low";
+}
+
+function reminderTierClass(priority) {
+  const classes = { critical: "expiry-rotten", high: "expiry-urgent", medium: "expiry-soon", low: "expiry-ok" };
+  return classes[priority] || "expiry-ok";
+}
+
 function todayStr() { return new Date().toISOString().split("T")[0]; }
 
 /* ── Food emoji ── */
@@ -223,35 +242,96 @@ function getRottingFoods() {
 
 /* ── Auth ── */
 
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const MIN_PASSWORD_LENGTH = 6;
+
+function setFieldError(input, message) {
+  if (!input) return;
+  input.classList.add("input-invalid");
+  input.setAttribute("aria-invalid", "true");
+  let error = input.nextElementSibling;
+  if (!error || !error.classList.contains("field-error")) {
+    error = document.createElement("p");
+    error.className = "field-error";
+    input.parentNode.insertBefore(error, input.nextSibling);
+  }
+  error.textContent = message;
+}
+
+function clearFieldError(input) {
+  if (!input) return;
+  input.classList.remove("input-invalid");
+  input.removeAttribute("aria-invalid");
+  const error = input.nextElementSibling;
+  if (error && error.classList.contains("field-error")) error.remove();
+}
+
+function validPassword(value) {
+  return value.length >= MIN_PASSWORD_LENGTH && /[a-zA-Z]/.test(value) && /[0-9]/.test(value);
+}
+
 function login() {
   const email = document.querySelector('input[type="email"]');
   const password = document.querySelector('input[type="password"]');
   const profile = getProfile();
+  let ok = true;
 
-  if (profile.passwordHash && password) {
-    if (hashPassword(password.value) !== profile.passwordHash) {
-      alert("Incorrect password.");
-      return;
-    }
+  if (!email.value.trim()) {
+    setFieldError(email, "Email is required.");
+    ok = false;
+  } else if (!EMAIL_PATTERN.test(email.value.trim())) {
+    setFieldError(email, "Enter a valid email, e.g. you@example.com.");
+    ok = false;
+  } else {
+    clearFieldError(email);
   }
 
-  if (email && email.value) {
-    profile.email = email.value;
-    saveProfile(profile);
+  if (!password.value) {
+    setFieldError(password, "Password is required.");
+    ok = false;
+  } else {
+    clearFieldError(password);
   }
+  if (!ok) return;
+
+  if (profile.passwordHash && hashPassword(password.value) !== profile.passwordHash) {
+    setFieldError(password, "Incorrect password. Try again.");
+    return;
+  }
+
+  profile.email = email.value.trim();
+  saveProfile(profile);
   window.location.href = "dashboard.html";
 }
 
 function signup() {
   const inputs = document.querySelectorAll(".login-card input");
-  const name = inputs[0] ? inputs[0].value.trim() : "";
-  const email = inputs[1] ? inputs[1].value.trim() : "";
-  const password = inputs[2] ? inputs[2].value : "";
-  const confirm = inputs[3] ? inputs[3].value : "";
+  const nameInput = inputs[0];
+  const emailInput = inputs[1];
+  const passwordInput = inputs[2];
+  const confirmInput = inputs[3];
+  const name = nameInput ? nameInput.value.trim() : "";
+  const email = emailInput ? emailInput.value.trim() : "";
+  const password = passwordInput ? passwordInput.value : "";
+  const confirm = confirmInput ? confirmInput.value : "";
+  let ok = true;
 
-  if (!name || !email || !password) { alert("Please fill in all fields."); return; }
-  if (password !== confirm) { alert("Passwords do not match."); return; }
-  if (password.length < 4) { alert("Password must be at least 4 characters."); return; }
+  if (!name) { setFieldError(nameInput, "Please enter your name."); ok = false; }
+  else clearFieldError(nameInput);
+
+  if (!email) { setFieldError(emailInput, "Email is required."); ok = false; }
+  else if (!EMAIL_PATTERN.test(email)) { setFieldError(emailInput, "Enter a valid email, e.g. you@example.com."); ok = false; }
+  else clearFieldError(emailInput);
+
+  if (!password) { setFieldError(passwordInput, "Password is required."); ok = false; }
+  else if (!validPassword(password)) { setFieldError(passwordInput, "Password needs " + MIN_PASSWORD_LENGTH + "+ characters, with at least a letter and a number."); ok = false; }
+  else clearFieldError(passwordInput);
+
+  if (!confirm) { setFieldError(confirmInput, "Please confirm your password."); ok = false; }
+  else if (confirm !== password) { setFieldError(confirmInput, "Passwords do not match."); ok = false; }
+  else clearFieldError(confirmInput);
+
+  if (!ok) return;
 
   const profile = getProfile();
   profile.name = name;
@@ -261,6 +341,17 @@ function signup() {
   addPoints(POINTS_RULES.addFood, "Welcome bonus");
   window.location.href = "profile.html";
 }
+
+/* clear a field's error as soon as the user starts fixing it */
+(function wireAuthErrorClearing() {
+  function wire() {
+    document.querySelectorAll(".login-card input").forEach(function (input) {
+      input.addEventListener("input", function () { clearFieldError(input); });
+    });
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", wire);
+  else wire();
+})();
 
 function changePassword() {
   const current = document.getElementById("currentPassword");
@@ -273,7 +364,7 @@ function changePassword() {
     alert("Current password is incorrect."); return;
   }
   if (newPw.value !== confirm.value) { alert("New passwords do not match."); return; }
-  if (newPw.value.length < 4) { alert("Password must be at least 4 characters."); return; }
+  if (!validPassword(newPw.value)) { alert("Password needs " + MIN_PASSWORD_LENGTH + "+ characters, with at least a letter and a number."); return; }
 
   profile.passwordHash = hashPassword(newPw.value);
   saveProfile(profile);
@@ -705,7 +796,7 @@ function loadRecipesPage() {
         '<pre style="white-space:pre-wrap;font-family:inherit;color:var(--text-muted);font-size:14px;">' + r.steps + '</pre></details>' +
       '<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">' +
         '<button class="btn-small" onclick="addRecipeToShopping(\'' + r.name + '\')">Add missing to list</button>' +
-        '<button class="btn-small btn-peach" onclick="addPoints(' + POINTS_RULES.addRecipe + ',\'Cooked ' + r.name + '\');alert(\'Nice! +' + POINTS_RULES.addRecipe + ' points for cooking.\')">Mark as cooked</button>' +
+        '<button class="btn-small btn-peach" onclick="markRecipeCooked(\'' + r.name.replace(/'/g, "\\'") + '\', this)">Mark as cooked</button>' +
       '</div>';
     container.appendChild(card);
   });
@@ -790,12 +881,30 @@ function addRecipeToShopping(recipeName) {
   const list = getShoppingList();
   recipe.ingredients.forEach(function (ing) {
     const have = pantry.some(function (p) { return p.includes(ing) || ing.includes(p); });
-    if (!have && !list.some(function (s) { return s.name.toLowerCase() === ing; })) {
+    /* always append missing ingredients, even if the same name is already on the list */
+    if (!have) {
       list.push({ name: ing.charAt(0).toUpperCase() + ing.slice(1), checked: false, fromFavourite: false });
     }
   });
   saveShoppingList(list);
   alert("Missing ingredients added to shopping list.");
+}
+
+function markRecipeCooked(recipeName, btn) {
+  addPoints(POINTS_RULES.addRecipe, "Cooked " + recipeName);
+  const card = btn && btn.closest ? btn.closest(".recipe-card") : null;
+  if (!card) {
+    alert("Nice! +" + POINTS_RULES.addRecipe + " points for cooking.");
+    return;
+  }
+  card.remove();
+  const container = document.getElementById("recipeList");
+  if (container && !container.querySelector(".recipe-card")) {
+    const done = document.createElement("p");
+    done.className = "empty-state";
+    done.textContent = "You've cooked everything here — nice! 🎉";
+    container.appendChild(done);
+  }
 }
 
 /* ── Shopping ── */
@@ -964,13 +1073,14 @@ function loadRemindersPage() {
   foods.forEach(function (food) {
     const days = daysLeft(food.expiry);
     const idx = getFoods().indexOf(food);
-    const priority = days <= 0 ? "critical" : days <= 1 ? "high" : days <= 3 ? "medium" : "low";
+    const priority = reminderPriority(days);
     const div = document.createElement("div");
     div.className = "reminder-item " + priority;
     div.innerHTML =
       '<span class="food-emoji">' + (food.emoji || foodEmoji(food.name)) + '</span>' +
       '<div class="reminder-info"><strong>' + food.name + '</strong>' +
-      '<p class="' + expiryClass(days) + '">' + expiryLabel(days) + '</p></div>' +
+      '<p class="' + reminderTierClass(priority) + '">' + expiryLabel(days) +
+        ' <span class="tier-pill tier-' + priority + '">' + reminderTierLabel(priority) + '</span></p></div>' +
       '<div class="food-actions">' +
         (priority !== "low" ? '<button class="btn-small btn-outline" onclick="markUsed(' + idx + ')">Used it</button>' : '') +
         '<a class="btn btn-small" href="recipes.html">Recipe</a>' +
