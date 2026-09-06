@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>FreshTrack — Recipes</title>
+  <title>FreshTrack — Favourites</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <link rel="stylesheet" href="style.css">
 </head>
@@ -16,8 +16,9 @@
     <a href="dashboard.html"><img src="Button_HomePage_Dark.png" alt="" class="nav-img-dark"><img src="Button_HomePage_Light.png" alt="" class="nav-img-light">Home</a>
     <a href="reminders.html"><img src="Button_ExpiryDates_Dark.png" alt="" class="nav-img-dark"><img src="Button_ExpiryDates_Light.png" alt="" class="nav-img-light">Reminders</a>
     <a href="inventory.html"><img src="Button_Fridge_Dark.png" alt="" class="nav-img-dark"><img src="Button_Fridge_Light.png" alt="" class="nav-img-light">Fridge</a>
-    <a href="recipes.html" class="active"><img src="Button_Recipes_Dark.png" alt="" class="nav-img-dark"><img src="Button_Recipes_Light.png" alt="" class="nav-img-light">Recipes</a>
+    <a href="recipes.html"><img src="Button_Recipes_Dark.png" alt="" class="nav-img-dark"><img src="Button_Recipes_Light.png" alt="" class="nav-img-light">Recipes</a>
     <a href="shopping.html"><img src="Button_ShoppingLists_Dark.png" alt="" class="nav-img-dark"><img src="Button_ShoppingLists_Light.png" alt="" class="nav-img-light">Shopping</a>
+    <!-- Favs accessed only via recipes.html topbar -->
     <a href="help.html"><img src="Button_FoodFacts_Dark.png" alt="" class="nav-img-dark"><img src="Button_FoodFacts_Light.png" alt="" class="nav-img-light">Food Facts</a>
   </nav>
   <div class="sidebar-footer">
@@ -31,9 +32,7 @@
       <img src="Logo_Light.png" alt="TrackFresh" class="brand-logo brand-logo-light">
       <img src="Logo_Dark.png" alt="TrackFresh" class="brand-logo brand-logo-dark">
     </a>
-
     <div class="topbar-actions">
-      <a class="favs-link" href="favorites.html" aria-label="View saved favourites">Favs &#9829;</a>
       <a class="profile-link" href="profile.html" aria-label="Open profile">
         <img src="Icon_Profile_Dark.png" alt="" class="nav-img-dark">
         <img src="Icon_Profile_Light.png" alt="" class="nav-img-light">
@@ -42,23 +41,13 @@
   </div>
 
   <header>
-    <h2>Recipes</h2>
-    <p>Add groceries to your inventory, then let AI cook up ideas. Save favourites or browse seasonal picks.</p>
+    <a href="recipes.html" class="back-link">&#8592; Back to Recipes</a>
+    <h2>Favourites</h2>
+    <p>Your saved recipes — click the heart to remove.</p>
   </header>
 
-  <!-- Section 1: AI Generator -->
   <section>
-    <h3>New ideas from your groceries</h3>
-    <p id="aiRecipeStatus">Add ingredients to your inventory, then click the button for AI recipe ideas.</p>
-    <button id="aiRecipeButton">Get AI recipe ideas</button>
-    <div id="aiRecipeList"></div>
-  </section>
-
-  <!-- Section 2: Seasonal Recipes (always visible) -->
-  <section>
-    <h3>Seasonal Recipes</h3>
-    <p>Try these classic seasonal recipes using common ingredients.</p>
-    <div id="seasonalList" class="recipe-grid"></div>
+    <div id="favoritesList"></div>
   </section>
 </main>
 </div>
@@ -66,9 +55,7 @@
 <script src="data.js"></script>
 <script src="script.js"></script>
 <script>
-  var aiBtn = document.getElementById("aiRecipeButton");
-  if (aiBtn) { aiBtn.addEventListener("click", generateAiRecipes); }
-  if (document.getElementById("seasonalList")) { renderSeasonalRecipes(); }
+  if (document.getElementById("favoritesList")) { loadFavorites(); }
 </script>
 </body>
 </html>

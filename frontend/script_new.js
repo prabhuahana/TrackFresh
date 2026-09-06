@@ -786,7 +786,7 @@ function loadRecipesPage() {
     card.className = "recipe-card";
     card.innerHTML =
       '<div class="recipe-card-header">' +
-        '<img class="recipe-img" src="' + r.image + '" alt="' + r.name + '" onerror="this.style.display=\'none\'">' +
+        '<img class="recipe-img" src="' + r.image + '" alt="' + r.name + '" onerror="this.src=defaultImage">' +
         '<div><h4><span class="recipe-icon">' + (r.emoji || 'R') + '</span> ' + (m.alt ? m.alt.name : r.name) +
           (m.expiringMatch ? ' <span class="badge">Uses expiring items</span>' : "") +
           (!m.dietOk ? ' <span class="badge">Diet swap available</span>' : "") +
@@ -822,13 +822,12 @@ async function readJsonResponse(response) {
   }
 }
 
-/* === Google Custom Search AI recipe suggester ===
-   Searches Google for real recipes matching your on-hand inventory. Get a
-   key at https://console.cloud.google.com/apis/credentials and a Custom
-   Search Engine ID at https://cse.google.com/cse/all */
-const GOOGLE_API_KEY = "YOUR_GOOGLE_API_KEY_HERE";
-const GOOGLE_SEARCH_CX = "YOUR_CSE_ID_HERE";
-const GOOGLE_API_URL = "https://www.googleapis.com/customsearch/v1";
+/* === Groq AI recipe suggester ===
+   Uses the Groq API (no regional blocks) to generate recipe ideas from
+   your on-hand inventory. Get a key at https://console.groq.com.
+*/
+const GROQ_API_KEY = "YOUR_GROQ_KEY_HERE";
+const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
 
 let _aiRunning = false;
 
@@ -846,8 +845,8 @@ async function generateAiRecipes() {
     status.textContent = "Add groceries in Inventory first.";
     return;
   }
-  if (GOOGLE_API_KEY === "YOUR_GOOGLE_API_KEY_HERE" || GOOGLE_SEARCH_CX === "YOUR_CSE_ID_HERE") {
-    status.textContent = "Paste your Google API key + CSE ID into the script to unlock AI recipes.";
+  if (GROQ_API_KEY === "YOUR_GROQ_KEY_HERE") {
+    status.textContent = "Paste your Groq API key into the script to unlock AI recipes.";
     return;
   }
 
@@ -857,67 +856,148 @@ async function generateAiRecipes() {
   status.textContent = "Finding recipes from your groceries...";
   container.innerHTML = "";
 
-  const query = inventory.join(", ") + " recipe";
   const controller = new AbortController();
   const timeoutId = setTimeout(function() { controller.abort(); }, 30000);
-  const apiUrl = GOOGLE_API_URL + "?key=" + encodeURIComponent(GOOGLE_API_KEY) + "&cx=" + encodeURIComponent(GOOGLE_SEARCH_CX) + "&q=" + encodeURIComponent(query) + "&num=8";
 
   try {
-    const response = await fetch(apiUrl, { signal: controller.signal });
+    const response = await fetch(GROQ_API_URL, {
+      method: "POST",
+      signal: controller.signal,
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + GROQ_API_KEY
+      },
+      body: JSON.stringify({
+        model: "openai/gpt-oss-20b",
+        max_tokens: 800,
+        messages: [
+          {
+            role: "system",
+            content: "You are a chef. Return ONLY a valid JSON object with a \"recipes\" key containing an array of 2 recipes. No markdown, no backticks. Each recipe: {\"name\":\"string\",\"description\":\"string\",\"time\":\"string\",\"ingredientsUsed\":[\"string\"]}."
+          },
+          {
+            role: "user",
+            content: "Here are my current ingredients: " + inventory.join(", ")
+          }
+        ],
+      })
+    });
+
     const rawText = await response.text();
 
     if (!response.ok) {
       let errorData = {};
       try { errorData = JSON.parse(rawText); } catch (_) { /* not JSON */ }
-      console.error("Google API Error Status:", response.status, errorData, rawText);
+      console.error("Groq API Error Status:", response.status, errorData, rawText);
       const apiMessage = (errorData.error && errorData.error.message) || "";
-      throw new Error(apiMessage || "Google search failed (HTTP " + response.status + ").");
+      throw new Error(apiMessage || "Groq request failed (HTTP " + response.status + ").");
     }
 
     let data;
     try { data = JSON.parse(rawText); }
     catch (e) {
-      console.error("Could not parse Google JSON body:", rawText);
-      throw new Error("Google returned an unexpected reply. Please try again.");
+      console.error("Could not parse Groq JSON body:", rawText);
+      throw new Error("Groq returned an unexpected reply. Please try again.");
     }
 
-    const items = (data.items || []).slice(0, 8);
-    if (items.length === 0) {
-      status.textContent = "No recipes found. Try adding more ingredients.";
-      return;
+    const rawContent = data.choices && data.choices[0] && data.choices[0].message ? data.choices[0].message.content : "";
+    console.log("Raw Groq content:", rawContent);
+    let wrapper = {};
+    try {
+      wrapper = JSON.parse(rawContent);
+    } catch (e) {
+      if (typeof rawContent === "object" && rawContent !== null) { wrapper = rawContent; console.log("Content was already an object, using it directly."); } else { console.error("Could not parse Groq content:", rawContent); throw new Error("Groq returned an invalid response. Please try again."); }
     }
 
-    items.forEach(function (item) {
-      const card = document.createElement("article");
+    let recipes = Array.isArray(wrapper) ? wrapper : (wrapper.recipes || []);
+    if (!Array.isArray(recipes) || recipes.length === 0) {
+      throw new Error("Groq did not return any recipes. Please try again.");
+    }
+
+    // Simple helper: pick a food photo based on the recipe name
+    // Uses clear if/else so it's easy to read and add more categories
+    function getRecipeImage(recipeName) {
+      var title = recipeName.toLowerCase();
+
+      if (title.includes("shake") || title.includes("smoothie") || title.includes("drink")) {
+        return "https://images.unsplash.com/photo-1572490122747-3968b75cc699?w=400&auto=format&fit=crop&q=80";
+      } else if (title.includes("pasta") || title.includes("spaghetti") || title.includes("mac")) {
+        return "https://images.unsplash.com/photo-1621996346565-e3d5d6281691?w=400&auto=format&fit=crop&q=80";
+      } else if (title.includes("salad")) {
+        return "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=400&auto=format&fit=crop&q=80";
+      } else if (title.includes("soup") || title.includes("stew")) {
+        return "https://images.unsplash.com/photo-1547592166-23ac45744acd?w=400&auto=format&fit=crop&q=80";
+      } else if (title.includes("burger") || title.includes("sandwich")) {
+        return "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400&auto=format&fit=crop&q=80";
+      } else if (title.includes("pizza")) {
+        return "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400&auto=format&fit=crop&q=80";
+      } else if (title.includes("curry")) {
+        return "https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=400&auto=format&fit=crop&q=80";
+      } else if (title.includes("taco") || title.includes("burrito")) {
+        return "https://images.unsplash.com/photo-1551504734-5ee1c4a1479b?w=400&auto=format&fit=crop&q=80";
+      } else if (title.includes("breakfast") || title.includes("pancake") || title.includes("eggs")) {
+        return "https://images.unsplash.com/photo-1525351484163-7529414344d8?w=400&auto=format&fit=crop&q=80";
+      } else if (title.includes("dessert") || title.includes("cake") || title.includes("sweet")) {
+        return "https://images.unsplash.com/photo-1563729784474-d77dbb933a9e?w=400&auto=format&fit=crop&q=80";
+      } else {
+        // Default food image if no keywords match
+        return "https://images.unsplash.com/photo-1498837167922-ddd27525d352?w=400&auto=format&fit=crop&q=80";
+      }
+    }
+
+    // Default image used if an Unsplash URL fails to load
+    var defaultImage = "https://images.unsplash.com/photo-1498837167922-ddd27525d352?w=400&auto=format&fit=crop&q=80";
+
+    recipes.slice(0, 6).forEach(function (recipe, idx) {
+      var card = document.createElement("article");
       card.className = "recipe-card ai-recipe-card";
 
-      const link = document.createElement("a");
-      link.href = item.link;
-      link.target = "_blank";
-      link.rel = "noopener noreferrer";
-      link.textContent = item.title;
-      link.className = "ai-recipe-title";
+      var cleanTitle = encodeURIComponent((recipe.name || "recipe").trim() + " recipe");
+      var recipeLink = "https://www.google.com/search?q=" + cleanTitle;
+      var savedKey = "ai_saved_" + idx;
+      var isSaved = localStorage.getItem(savedKey) === "1";
+      var imgUrl = getRecipeImage(recipe.name);
 
-      const description = document.createElement("p");
-      description.className = "ai-recipe-desc";
-      description.textContent = (item.pagemap && item.pagemap.metatags && item.pagemap.metatags[0] && item.pagemap.metatags[0]["og:description"]) || item.snippet || "A recipe using your inventory ingredients.";
+      card.innerHTML =
+        '<div class="ai-card-inner">' +
+          '<div class="ai-card-body">' +
+            '<h4 class="ai-card-title"><a href="' + recipeLink + '" target="_blank" rel="noopener noreferrer">' + (recipe.name || "Untitled recipe") + '</a></h4>' +
+            '<p class="ai-card-desc">' + (recipe.description || "") + '</p>' +
+            '<div class="ai-card-meta">' +
+              '<span class="ai-meta-tag">⌟ ' + (recipe.time || "—") + '</span>' +
+              '<span class="ai-meta-tag">🥗 ' + (recipe.ingredientsUsed || recipe.ingredients || []).slice(0, 3).join(", ") + '</span>' +
+            '</div>' +
+            '<div class="ai-card-actions">' +
+              '<a href="' + recipeLink + '" target="_blank" rel="noopener noreferrer" class="btn btn-small">View Recipe ↑</a>' +
+              '<button class="ai-heart-btn' + (isSaved ? " saved" : "") + '" data-idx="' + idx + '" title="Save recipe">' +
+                (isSaved ? "♥" : "♡") +
+              '</button>' +
+            '</div>' +
+          '</div>' +
+          '<div class="ai-card-thumb-wrap">' +
+            '<img class="ai-card-thumb" src="' + imgUrl + '" alt="' + (recipe.name || "recipe") + '" onerror="this.src=defaultImage" >' +
+          '</div>' +
+        '</div>' +
+        '<span class="ai-recipe-badge">✨ AI</span>';
 
-      const badge = document.createElement("span");
-      badge.className = "ai-recipe-badge";
-      badge.textContent = "Google";
+      card.querySelector(".ai-heart-btn").addEventListener("click", function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var k = "ai_saved_" + this.dataset.idx;
+        var now = localStorage.getItem(k) === "1";
+        if (now) { localStorage.removeItem(k); this.textContent = "♡"; this.classList.remove("saved"); }
+        else      { localStorage.setItem(k, "1");  this.textContent = "♥"; this.classList.add("saved"); }
+      });
 
-      card.appendChild(badge);
-      card.appendChild(link);
-      card.appendChild(description);
       container.appendChild(card);
     });
 
-    status.textContent = "Found " + items.length + " recipe" + (items.length > 1 ? "s" : "") + " from your groceries.";
+    status.textContent = "Found " + recipes.length + " recipe" + (recipes.length > 1 ? "s" : "") + " from your groceries.";
   } catch (error) {
     if (error.name === "AbortError") {
       status.textContent = "Request timed out after 30 seconds. Please try again.";
     } else if (error.name === "TypeError") {
-      status.textContent = "Could not reach Google (network or CORS blocked the request).";
+      status.textContent = "Could not reach Groq (network or CORS blocked the request).";
     } else {
       status.textContent = error.message || "Something went wrong while finding recipes.";
     }
@@ -928,6 +1008,83 @@ async function generateAiRecipes() {
     button.textContent = "Get AI recipe ideas";
   }
 }
+
+/* ── Seasonal + Favourites ── */
+var SEASONAL_RECIPES = [
+  {name:"Pumpkin Soup",description:"A warming autumn classic — silky smooth and full of flavour.",time:"35 min",ingredientsUsed:["pumpkin","onion","garlic","vegetable stock","cream"],url:"https://www.bbcgoodfood.com/recipes/pumpkin-soup"},
+  {name:"Slow Cooker Beef Stew",description:"Hearty winter comfort food. Layer vegetables and beef, come home to dinner.",time:"6–8 hrs",ingredientsUsed:["beef chuck","carrots","potatoes","onion","beef stock"],url:"https://www.bbcgoodfood.com/recipes/slow-cooker-beef-stew"},
+  {name:"Spring Vegetable Risotto",description:"Fresh asparagus and peas make this creamy risotto sing.",time:"40 min",ingredientsUsed:["arborio rice","peas","asparagus","white wine","parmesan"],url:"https://www.bbcgoodfood.com/recipes/risotto-primavera"},
+  {name:"Summer Berry Pavlova",description:"Light, fluffy meringue topped with fresh cream and seasonal berries.",time:"1 hr 20 min",ingredientsUsed:["egg whites","caster sugar","double cream","strawberries","raspberries"],url:"https://www.bbcgoodfood.com/recipes/berry-pavlova"}
+];
+
+function renderSeasonalRecipes() {
+  var c = document.getElementById("seasonalList");
+  if (!c) return;
+  c.innerHTML = "";
+  SEASONAL_RECIPES.forEach(function(r, i) { c.appendChild(buildRecipeCard(r, i)); });
+}
+
+function getFavorites() {
+  try { return JSON.parse(localStorage.getItem("favRecipes") || "[]"); }
+  catch (e) { return []; }
+}
+
+function saveFavorites(list) { localStorage.setItem("favRecipes", JSON.stringify(list)); }
+
+function toggleFavorite(recipe) {
+  var favs = getFavorites();
+  var idx = favs.findIndex(function(f) { return f.name === recipe.name; });
+  if (idx !== -1) { favs.splice(idx, 1); }
+  else { favs.push(recipe); }
+  saveFavorites(favs);
+  return idx === -1;
+}
+
+function buildRecipeCard(recipe, idx) {
+  var card = document.createElement("article");
+  card.className = "recipe-card ai-recipe-card";
+  var cleanTitle = encodeURIComponent((recipe.name || "recipe").trim() + " recipe");
+  var recipeLink = recipe.url || ("https://www.google.com/search?q=" + cleanTitle);
+  var defaultImage = "https://images.unsplash.com/photo-1498837167922-ddd27525d352?w=400&auto=format&fit=crop&q=80";
+  var favs = getFavorites();
+  var isSaved = favs.some(function(f) { return f.name === recipe.name; });
+  card.innerHTML =
+    '<div class="ai-card-inner"><div class="ai-card-body">' +
+    '<h4 class="ai-card-title"><a href="' + recipeLink + '" target="_blank" rel="noopener noreferrer">' + (recipe.name || "Untitled recipe") + '</a></h4>' +
+    '<p class="ai-card-desc">' + (recipe.description || "") + '</p>' +
+    '<div class="ai-card-meta"><span class="ai-meta-tag">' + (recipe.time || "—") + '</span></div>' +
+    '<div class="ai-card-actions">' +
+    '<a href="' + recipeLink + '" target="_blank" rel="noopener noreferrer" class="btn btn-small">View Recipe</a>' +
+    '<button class="ai-heart-btn' + (isSaved ? " saved" : "") + '" data-recipe="' + encodeURIComponent(JSON.stringify(recipe)) + '">' + (isSaved ? "\u2665" : "\u2661") + '</button>' +
+    '</div></div>' +
+    '<div class="ai-card-thumb-wrap"><img class="ai-card-thumb" src="' + (recipe.imageUrl || defaultImage) + '" alt="' + (recipe.name || "recipe") + '" onerror="this.src=defaultImage"></div></div>' +
+    '<span class="ai-recipe-badge">' + (recipe.badge || "Seasonal") + '</span>';
+  return card;
+}
+
+function loadFavorites() {
+  var c = document.getElementById("favoritesList");
+  if (!c) return;
+  c.innerHTML = "";
+  var favs = getFavorites();
+  if (favs.length === 0) { c.innerHTML = '<p class="empty-state">No favourites saved yet! Click the heart on any recipe to save it here.</p>'; return; }
+  favs.forEach(function(r) { c.appendChild(buildRecipeCard(r, -1)); });
+}
+
+document.addEventListener("click", function(e) {
+  var btn = e.target.closest(".ai-heart-btn");
+  if (!btn) return;
+  e.preventDefault();
+  var recipeData = btn.getAttribute("data-recipe");
+  if (!recipeData) return;
+  var recipe;
+  try { recipe = JSON.parse(decodeURIComponent(recipeData)); }
+  catch (err) { return; }
+  var saved = toggleFavorite(recipe);
+  btn.textContent = saved ? "\u2665" : "\u2661";
+  btn.classList.toggle("saved", saved);
+});
+
 function addRecipeToShopping(recipeName) {
   const recipe = RECIPES.find(function (r) { return r.name === recipeName; });
   if (!recipe) return;
