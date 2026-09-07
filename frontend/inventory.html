@@ -24,7 +24,7 @@ IF user clicks "Add Item" THEN
     CALL strvalidation(foodName) with rules
     IF foodName = "" THEN
         DISPLAY "Food name cannot be blank"
-    ELSE THEN
+    ELSE
         CALL addFood() function
         CALL saveFoods() function
         REFRESH food list display

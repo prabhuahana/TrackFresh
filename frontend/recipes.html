@@ -7,6 +7,26 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+<!--
+====================================================================
+PSEUDOCODE (EXAM STYLE) - RECIPES PAGE
+====================================================================
+DISPLAY "New ideas from your groceries" section
+
+IF user clicks "Get AI recipe ideas" THEN
+    CALL getFoods() to get inventory
+    CALL generateAiRecipes() function
+    FOR each recipe returned DO
+        DISPLAY recipe card
+    ENDFOR
+ENDIF
+
+DISPLAY "Seasonal Recipes" section
+FOR each seasonal recipe DO
+    DISPLAY recipe card
+ENDFOR
+====================================================================
+-->
 <button class="theme-toggle theme-toggle-float" onclick="toggleTheme()" aria-label="Toggle dark mode">Dark mode</button>
 
 <div class="layout">

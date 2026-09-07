@@ -10,14 +10,24 @@
 <button class="theme-toggle theme-toggle-float" onclick="toggleTheme()" aria-label="Toggle dark mode">Dark mode</button>
 
 <!--
-PSEUDOCODE:
-BEGIN
-  show profile form for name, email, diet, preferences, and notifications
-  allow user to select favourite food categories and pinned dashboard sections
-  when Save Profile is clicked:
-    store settings in local storage
-    apply custom theme preferences
-END
+====================================================================
+PSEUDOCODE (EXAM STYLE) - PROFILE PAGE
+====================================================================
+DISPLAY "Profile" header
+DISPLAY "Account" section with name and email inputs
+
+IF user clicks "Save Profile" THEN
+    INPUT profileName
+    INPUT profileEmail
+    
+    IF name = "" THEN
+        DISPLAY "Name cannot be blank"
+    ELSE
+        CALL saveProfileForm() function
+        DISPLAY "Profile saved successfully"
+    ENDIF
+ENDIF
+====================================================================
 -->
 
 <div class="layout">

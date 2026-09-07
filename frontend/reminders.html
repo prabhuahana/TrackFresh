@@ -19,11 +19,11 @@ FOR each food item DO
     SET daysUntilExpiry = expiryDate - today
     IF daysUntilExpiry < 0 THEN
         SET priority = "Critical"
-    ELSE IF daysUntilExpiry <= 2 THEN
+    ELSEIF daysUntilExpiry <= 2 THEN
         SET priority = "High"
-    ELSE IF daysUntilExpiry <= 7 THEN
+    ELSEIF daysUntilExpiry <= 7 THEN
         SET priority = "Medium"
-    ELSE THEN
+    ELSE
         SET priority = "Low"
     ENDIF
 ENDFOR

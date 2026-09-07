@@ -1,34 +1,6 @@
-/*
-================================================================================
-FILE NAME: style.css
-PURPOSE: Main stylesheet for the FreshTrack app.
-         Contains all CSS rules for:
-         - Color scheme (light and dark themes)
-         - Layout (sidebar, main content area)
-         - Component styling (cards, buttons, inputs)
-         - Responsive design (mobile/tablet/desktop)
-         - AI recipe card styling
-CONNECTION TO APP:
-  - Linked to all HTML pages via <link rel="stylesheet" href="style.css">
-  - Uses CSS variables for easy theming
-  - Dark mode toggles the [data-theme="dark"] attribute on <html>
-================================================================================
+/* style.css - all the colours and layouts for FreshTrack */
 
-PSEUDOCODE - How the styling works:
-1. CSS variables define colors for both light and dark themes
-2. Dark mode is applied via [data-theme="dark"] selector
-3. Flexbox and Grid are used for responsive layouts
-4. Mobile styles override desktop at 768px breakpoint
-================================================================================
-*/
 
-/*
-================================================================================
-SECTION 1: CSS VARIABLES (THEME COLORS)
-Defines color palette for both light and dark themes.
-CSS custom properties allow easy color customization.
-================================================================================
-*/
 :root {
   --bg: #f3f6f2;
   --surface: #ffffff;
@@ -79,12 +51,6 @@ body {
 }
 
 
-/*
-================================================================================
-SECTION 2: LAYOUT
-Main layout structure using flexbox.
-================================================================================
-*/
 /* LAYOUT */
 
 .layout {
@@ -98,12 +64,6 @@ Main layout structure using flexbox.
 html,
 body {
 
-/*
-================================================================================
-SECTION 3: SIDEBAR NAVIGATION
-Styling for the sidebar navigation menu.
-================================================================================
-*/
   overflow-x: hidden;
 }
 
@@ -332,7 +292,7 @@ header p {
   color: var(--text-muted);
 }
 
-/* SECTIONS */
+// different sections of the app layout
 
 section {
   background: var(--surface);
@@ -900,12 +860,6 @@ textarea {
   padding: 8px 14px;
   border-radius: 20px;
 
-/*
-================================================================================
-SECTION 4: LOGIN PAGE STYLES
-Styling for the login and signup pages.
-================================================================================
-*/
   cursor: pointer;
   font-size: 13px;
 }
@@ -1759,13 +1713,6 @@ textarea:focus
  {
   background:  var(--bg);
 
-/*
-================================================================================
-SECTION 5: MOBILE RESPONSIVE STYLES
-Styles for screens 768px and smaller.
-Converts sidebar to bottom navigation bar.
-================================================================================
-*/
 }
 
 ::-webkit-scrollbar-thumb 
@@ -2706,12 +2653,6 @@ input.input-invalid {
 .favs-link {
   display: inline-flex;
 
-/*
-================================================================================
-SECTION 6: AI RECIPE CARD STYLING
-Styles for the recipe cards from the AI tool.
-================================================================================
-*/
   align-items: center;
   gap: 5px;
   padding: 6px 14px;

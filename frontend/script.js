@@ -1,16 +1,9 @@
-/* FreshTrack app logic */
+/* script.js - makes the app interactive: food list, themes, login, etc. */
 
 /*
-================================================================================
-FILE NAME: script.js
-PURPOSE: Main JavaScript file for FreshTrack app logic.
-CONNECTION TO APP:
-   - Loaded on all HTML pages via <script src="script.js">
-   - Depends on data.js for constants and reference data
-================================================================================
-
-PSEUDOCODE (EXAM STYLE) - HOW THE APP WORKS:
-================================================================================
+====================================================================
+HOW THE APP WORKS - EXAM PSEUDOCODE:
+====================================================================
 INITIALIZATION:
     DISPLAY "FreshTrack"
     CALL applyTheme() function
@@ -21,12 +14,10 @@ MAIN PROGRAM LOOP:
             CALL addFood() function
             CALL saveFoods() function
         ENDIF
-        
         IF user views inventory THEN
             CALL getFoods() function
             DISPLAY food list
         ENDIF
-        
         IF user clicks theme toggle THEN
             CALL toggleTheme() function
         ENDIF
@@ -34,8 +25,9 @@ MAIN PROGRAM LOOP:
 
 DATA STORAGE:
     SAVE all changes to localStorage
-================================================================================
+====================================================================
 */
+
 
 function getFoods() {
   return JSON.parse(localStorage.getItem("foods")) || [];
@@ -1043,7 +1035,7 @@ async function readJsonResponse(response) {
    Uses the Groq API (no regional blocks) to generate recipe ideas from
    your on-hand inventory. Get a key at https://console.groq.com.
 */
-const GROQ_API_KEY = "YOUR_GROQ_KEY_HERE";
+const GROQ_API_KEY = "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";
 const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
 
 let _aiRunning = false;

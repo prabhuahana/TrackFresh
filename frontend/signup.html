@@ -30,13 +30,13 @@ IF user clicks Create Account THEN
     CALL strvalidation(password) with rules
     IF name = "" THEN
         DISPLAY "Name cannot be blank"
-    ELSE IF email = "" THEN
+    ELSEIF email = "" THEN
         DISPLAY "Email cannot be blank"
-    ELSE IF password = "" THEN
+    ELSEIF password = "" THEN
         DISPLAY "Password cannot be blank"
-    ELSE IF password != confirmPassword THEN
+    ELSEIF password != confirmPassword THEN
         DISPLAY "Passwords do not match"
-    ELSE THEN
+    ELSE
         CALL signup() function
         REDIRECT to dashboard.html
     ENDIF

@@ -1,3 +1,30 @@
+/* script_new.js - backup copy of the app logic */
+
+/*
+====================================================================
+HOW THE APP WORKS - EXAM PSEUDOCODE:
+====================================================================
+INITIALIZATION:
+    DISPLAY "FreshTrack"
+    CALL applyTheme() function
+
+MAIN PROGRAM LOOP:
+    WHILE user is on page DO
+        IF user adds food THEN
+            CALL addFood() function
+            CALL saveFoods() function
+        ENDIF
+        IF user views inventory THEN
+            CALL getFoods() function
+            DISPLAY food list
+        ENDIF
+        IF user clicks theme toggle THEN
+            CALL toggleTheme() function
+        ENDIF
+    ENDWHILE
+====================================================================
+*/
+
 /* FreshTrack app logic */
 
 function getFoods() {
