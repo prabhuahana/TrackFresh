@@ -1,3 +1,22 @@
+// data.js - all the constant data and lookup tables for FreshTrack
+
+/*
+====================================================================
+PSEUDOCODE - WHAT THIS FILE HOLDS:
+====================================================================
+DISPLAY food emoji codes (FOOD_EMOJIS)
+DISPLAY food category list (CATEGORIES)
+DISPLAY shelf life data in days (SHELF_LIFE)
+DISPLAY pre-made recipe templates (RECIPES)
+DISPLAY grocery price data (PRICE_DATA)
+DISPLAY weekly specials from supermarkets (BROCHURES)
+DISPLAY Australian states (AU_REGIONS)
+DISPLAY points rules for gamification (POINTS_RULES)
+DISPLAY dashboard section configs (DASHBOARD_SECTIONS)
+====================================================================
+*/
+
+// food emoji codes - each item gets a short letter badge
 const FOOD_EMOJIS = {
   milk: "M", bread: "B", egg: "E", eggs: "E", chicken: "C", rice: "R",
   pasta: "P", tomato: "T", tomatoes: "T", spinach: "S", banana: "B",
@@ -11,14 +30,17 @@ const FOOD_EMOJIS = {
   oil: "O", vegetables: "V", fruit: "F", meat: "M", default: "F"
 };
 
+// the different food types we sort things into
 const CATEGORIES = [
   "dairy", "meat", "produce", "grains", "pantry", "frozen", "beverages", "other"
 ];
 
+// how many days each food type stays good for
 const SHELF_LIFE = {
   dairy: 7, meat: 3, produce: 5, grains: 30, pantry: 90, frozen: 60, beverages: 14, other: 7
 };
 
+// recipe ideas built into the app
 const RECIPES = [
   {
     name: "Mac and Cheese",
@@ -49,6 +71,7 @@ const RECIPES = [
   }
 ];
 
+// sample prices from different shops
 const PRICE_DATA = [
   { item: "milk", coles: 2.50, woolies: 2.40, aldi: 2.20 },
   { item: "bread", coles: 3.00, woolies: 2.80, aldi: 2.50 },
@@ -70,6 +93,7 @@ const PRICE_DATA = [
   { item: "pumpkin", coles: 3.00, woolies: 2.80, aldi: 2.50 }
 ];
 
+// weekly deals from the supermarkets
 const BROCHURES = {
   coles: {
     name: "Coles",
