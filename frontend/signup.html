@@ -10,15 +10,39 @@
 <button class="theme-toggle theme-toggle-float theme-toggle-float-top" onclick="toggleTheme()" aria-label="Toggle dark mode">Dark mode</button>
 
 <!--
-PSEUDOCODE:
-BEGIN
-  display signup page with name, email, password, and confirm password fields
-  when user clicks Create Account:
-    check all fields are filled
-    ensure passwords match
-    save profile data
-    redirect to profile or dashboard
-END
+
+================================================================================
+PSEUDOCODE (EXAM STYLE) - SIGNUP PAGE
+================================================================================
+DISPLAY "FreshTrack - Start reducing food waste today."
+DISPLAY "Enter your name:"
+INPUT name
+DISPLAY "Enter your email:"
+INPUT email
+DISPLAY "Enter your password:"
+INPUT password
+DISPLAY "Confirm your password:"
+INPUT confirmPassword
+DISPLAY "Click Create Account button"
+IF user clicks Create Account THEN
+    CALL strvalidation(name) with rules
+    CALL emailvalidation(email) with rules
+    CALL strvalidation(password) with rules
+    IF name = "" THEN
+        DISPLAY "Name cannot be blank"
+    ELSE IF email = "" THEN
+        DISPLAY "Email cannot be blank"
+    ELSE IF password = "" THEN
+        DISPLAY "Password cannot be blank"
+    ELSE IF password != confirmPassword THEN
+        DISPLAY "Passwords do not match"
+    ELSE THEN
+        CALL signup() function
+        REDIRECT to dashboard.html
+    ENDIF
+ENDIF
+================================================================================
+
 -->
 
 <div class="login-page">

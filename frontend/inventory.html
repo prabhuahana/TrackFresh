@@ -9,15 +9,29 @@
 <body>
 <button class="theme-toggle theme-toggle-float" onclick="toggleTheme()" aria-label="Toggle dark mode">Dark mode</button>
 <!--
-PSEUDOCODE:
-BEGIN
-  render form for adding food items
-  gather name, purchase date, expiry date, quantity, unit, and category
-  when Add Item is clicked:
-    validate required fields
-    save item to inventory
-    update food list and reminders
-END
+
+================================================================================
+PSEUDOCODE (EXAM STYLE) - INVENTORY PAGE
+================================================================================
+DISPLAY "Add Food" form with input fields
+IF user clicks "Add Item" THEN
+    INPUT foodName
+    INPUT purchaseDate
+    INPUT expiryDate
+    INPUT quantity
+    SELECT unit from dropdown
+    SELECT category from dropdown
+    CALL strvalidation(foodName) with rules
+    IF foodName = "" THEN
+        DISPLAY "Food name cannot be blank"
+    ELSE THEN
+        CALL addFood() function
+        CALL saveFoods() function
+        REFRESH food list display
+    ENDIF
+ENDIF
+================================================================================
+
 -->
 <div class="layout">
 <aside>

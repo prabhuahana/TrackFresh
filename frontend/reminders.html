@@ -9,13 +9,30 @@
 <body>
 <button class="theme-toggle theme-toggle-float" onclick="toggleTheme()" aria-label="Toggle dark mode">Dark mode</button>
 <!--
-PSEUDOCODE:
-BEGIN
-  sort food items by expiry urgency
-  group items into critical, high, medium, and low priority
-  show reminders list for items expiring soon or already expired
-  allow user to mark items as used
-END
+
+================================================================================
+PSEUDOCODE (EXAM STYLE) - REMINDERS PAGE
+================================================================================
+DISPLAY "Priority Order" header
+CALL getFoods() to fetch all food items
+FOR each food item DO
+    SET daysUntilExpiry = expiryDate - today
+    IF daysUntilExpiry < 0 THEN
+        SET priority = "Critical"
+    ELSE IF daysUntilExpiry <= 2 THEN
+        SET priority = "High"
+    ELSE IF daysUntilExpiry <= 7 THEN
+        SET priority = "Medium"
+    ELSE THEN
+        SET priority = "Low"
+    ENDIF
+ENDFOR
+SORT items by daysUntilExpiry ascending
+FOR each food item DO
+    DISPLAY item with priority badge
+ENDFOR
+================================================================================
+
 -->
 <div class="layout">
 <aside>

@@ -9,14 +9,30 @@
 <button class="theme-toggle theme-toggle-float theme-toggle-float-top" onclick="toggleTheme()" aria-label="Toggle dark mode">Dark mode</button>
 
 <!--
-PSEUDOCODE:
-BEGIN
-  display login page with email and password input
-  when user clicks Sign In:
-    validate credentials
-    redirect to dashboard if valid
-  show link to create account page
-END
+
+================================================================================
+PSEUDOCODE (EXAM STYLE) - LOGIN PAGE
+================================================================================
+DISPLAY "FreshTrack - Your kitchen, organised."
+DISPLAY "Enter your email:"
+INPUT email
+DISPLAY "Enter your password:"
+INPUT password
+DISPLAY "Click Sign In button"
+IF user clicks Sign In THEN
+    CALL login() function
+    IF credentials valid THEN
+        REDIRECT to dashboard.html
+    ELSE THEN
+        DISPLAY "Invalid email or password"
+    ENDIF
+ENDIF
+DISPLAY "Don't have an account? Create one"
+IF user clicks "Create one" THEN
+    REDIRECT to signup.html
+ENDIF
+================================================================================
+
 -->
 
 <div class="login-page">

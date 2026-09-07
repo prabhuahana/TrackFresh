@@ -1,3 +1,25 @@
+/*
+================================================================================
+FILE NAME: server.js
+PURPOSE: Backend server for the FreshTrack app.
+         Handles:
+         - Serving static files (HTML, CSS, JS, images)
+         - AI recipe generation via Mistral API
+         - Price comparison (if Python script is available)
+CONNECTION TO APP:
+  - Frontend (script.js) calls server endpoints for AI recipes
+  - Runs on localhost:3000
+  - Environment variables for API keys (.env file)
+================================================================================
+
+PSEUDOCODE - How the server works:
+1. Load environment variables from .env file
+2. Create HTTP server to handle requests
+3. Route /api/recipes -> AI recipe generation (Mistral API)
+4. Route /api/prices -> Price comparison (Python script)
+5. Route /* -> Serve static files from frontend directory
+================================================================================
+*/
 import http from "node:http";
 import { spawn } from "node:child_process";
 import fs from "node:fs";
@@ -9,6 +31,13 @@ const root = path.dirname(fileURLToPath(import.meta.url));
 const port = 3000;
 const host = "127.0.0.1";
 
+
+/*
+================================================================================
+SECTION 1: ENVIRONMENT VARIABLES
+Loads API keys from .env file.
+================================================================================
+*/
 function loadEnv() {
   const file = path.join(root, ".env");
   if (!fs.existsSync(file)) return;
@@ -18,6 +47,13 @@ function loadEnv() {
     const value = valueParts.join("=").trim();
     if (name && value && !process.env[name.trim()]) process.env[name.trim()] = value;
   });
+
+/*
+================================================================================
+SECTION 2: HELPER FUNCTIONS
+Utilities for JSON responses and body parsing.
+================================================================================
+*/
 }
 
 loadEnv();
@@ -39,7 +75,7 @@ function readBody(request) {
   });
 }
 
-function recipePrompt(inventory, weather) {
+function buildRecipeMessage(inventory, weather) {
   return [
     "You are a chef assistant. Create 2 to 4 simple recipes based on the user's groceries.",
     "Prioritise ingredients that are already in the inventory.",
@@ -85,6 +121,13 @@ function cleanRecipes(text) {
   return recipes.slice(0, 4).map(function (recipe) {
     return {
       name: String(recipe.name || "Recipe"),
+
+/*
+================================================================================
+SECTION 3: AI RECIPE GENERATION
+Calls Mistral API to generate recipes based on user inventory.
+================================================================================
+*/
       description: String(recipe.description || "A simple meal from your groceries."),
       ingredients: Array.isArray(recipe.ingredients) ? recipe.ingredients.map(String) : [],
       steps: Array.isArray(recipe.steps) ? recipe.steps.map(String) : [],
@@ -117,7 +160,7 @@ async function createRecipes(request, response) {
     const mistral = new Mistral({ apiKey: process.env.MISTRAL_API_KEY });
     const result = await mistral.chat.complete({
       model: "mistral-small-latest",
-      messages: [{ role: "user", content: recipePrompt(inventory, body.weather) }],
+      messages: [{ role: "user", content: buildRecipeMessage(inventory, body.weather) }],
       temperature: 0.4
     });
     const message = result.choices?.[0]?.message;
@@ -154,6 +197,13 @@ function searchPrices(request, response) {
     console.error("Price comparison failed:", error.message);
     sendJson(response, 502, { error: "The price comparison service is unavailable." });
   });
+
+/*
+================================================================================
+SECTION 4: STATIC FILE SERVING
+Serves HTML, CSS, JS, and image files.
+================================================================================
+*/
   python.on("close", function (code) {
     if (code !== 0) {
       console.error("Price comparison script failed:", errorOutput.trim());

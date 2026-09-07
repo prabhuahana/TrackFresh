@@ -9,13 +9,27 @@
 <body>
 <button class="theme-toggle theme-toggle-float" onclick="toggleTheme()" aria-label="Toggle dark mode">Dark mode</button>
 <!--
-PSEUDOCODE:
-BEGIN
-  show top header with logo and avatar dropdown menu
-  list items expiring soon with colour-coded time pills
-  slide fridge items horizontally
-  show quick action grid and fixed bottom tab bar
-END
+
+================================================================================
+PSEUDOCODE (EXAM STYLE) - DASHBOARD PAGE
+================================================================================
+DISPLAY "FreshTrack Dashboard"
+CALL applyTheme() function
+CALL getFoods() function to fetch inventory
+FOR each food item DO
+    IF expiry date within 3 days THEN
+        DISPLAY in "Expiry" section with warning badge
+    ENDIF
+ENDFOR
+FOR each food item DO
+    DISPLAY in "Fridge" carousel
+ENDFOR
+DISPLAY quick action tiles
+IF user clicks a tile THEN
+    REDIRECT to corresponding page
+ENDIF
+================================================================================
+
 -->
 
 <div class="layout">

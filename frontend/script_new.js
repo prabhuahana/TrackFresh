@@ -180,13 +180,32 @@ function foodEmoji(name) {
 }
 
 function guessCategory(name) {
-  const n = name.toLowerCase();
-  if (/milk|cheese|yogurt|butter|cream/.test(n)) return "dairy";
-  if (/chicken|beef|pork|fish|meat|salmon/.test(n)) return "meat";
-  if (/apple|banana|spinach|tomato|avocado|berry|lettuce|carrot|broccoli|pumpkin|onion|garlic|vegetable|fruit|potato/.test(n)) return "produce";
-  if (/rice|pasta|bread|oats|flour/.test(n)) return "grains";
-  if (/juice|water|coffee|tea/.test(n)) return "beverages";
-  if (/frozen|ice/.test(n)) return "frozen";
+  var n = name.toLowerCase();
+  var i;
+  var dairyWords = ["milk", "cheese", "yogurt", "butter", "cream"];
+  var meatWords = ["chicken", "beef", "pork", "fish", "meat", "salmon"];
+  var produceWords = ["apple", "banana", "spinach", "tomato", "avocado", "berry", "lettuce", "carrot", "broccoli", "pumpkin", "onion", "garlic", "vegetable", "fruit", "potato"];
+  var grainWords = ["rice", "pasta", "bread", "oats", "flour"];
+  var beverageWords = ["juice", "water", "coffee", "tea"];
+  var frozenWords = ["frozen", "ice"];
+  for (i = 0; i < dairyWords.length; i = i + 1) {
+    if (n.indexOf(dairyWords[i]) !== -1) return "dairy";
+  }
+  for (i = 0; i < meatWords.length; i = i + 1) {
+    if (n.indexOf(meatWords[i]) !== -1) return "meat";
+  }
+  for (i = 0; i < produceWords.length; i = i + 1) {
+    if (n.indexOf(produceWords[i]) !== -1) return "produce";
+  }
+  for (i = 0; i < grainWords.length; i = i + 1) {
+    if (n.indexOf(grainWords[i]) !== -1) return "grains";
+  }
+  for (i = 0; i < beverageWords.length; i = i + 1) {
+    if (n.indexOf(beverageWords[i]) !== -1) return "beverages";
+  }
+  for (i = 0; i < frozenWords.length; i = i + 1) {
+    if (n.indexOf(frozenWords[i]) !== -1) return "frozen";
+  }
   return "pantry";
 }
 
@@ -209,7 +228,6 @@ function getRottingFoods() {
 
 /* ── Auth ── */
 
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MIN_PASSWORD_LENGTH = 6;
 
 function setFieldError(input, message) {
@@ -233,8 +251,81 @@ function clearFieldError(input) {
   if (error && error.classList.contains("field-error")) error.remove();
 }
 
+
+/*
+================================================================================
+VALIDATION FUNCTIONS (HIGH SCHOOL SYLLABUS STYLE)
+These functions check user input without using complex regex patterns.
+================================================================================
+*/
+
+// FUNCTION: strvalidation
+// PURPOSE: Validates string inputs for names, emails, and passwords
+function strvalidation(value, type) {
+    var letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    
+    if (type === "email") {
+        var hasAt = false;
+        var hasDot = false;
+        var atPos = -1;
+        var dotPos = -1;
+        var i;
+        
+        for (i = 0; i < value.length; i = i + 1) {
+            if (value.charAt(i) === "@") { hasAt = true; atPos = i; }
+            if (value.charAt(i) === ".") { hasDot = true; dotPos = i; }
+        }
+        
+        if (hasAt === true && hasDot === true && atPos > 0 && dotPos > atPos + 1) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+    
+    if (type === "name" || type === "password") {
+        var hasLetter = false;
+        var hasNumber = false;
+        var i;
+        
+        for (i = 0; i < value.length; i = i + 1) {
+            var char = value.charAt(i);
+            if (type === "name") {
+                if (letters.indexOf(char) !== -1 || char === "-" || char === "'" || char === " ") {
+                    hasLetter = true;
+                }
+            } else {
+                if (letters.indexOf(char) !== -1) { hasLetter = true; }
+            }
+            if (char >= "0" && char <= "9") { hasNumber = true; }
+        }
+        
+        if (type === "password") {
+            if (value.length >= 6 && hasLetter === true && hasNumber === true) {
+                return true;
+            } else {
+                return false;
+            }
+        } else {
+            return hasLetter;
+        }
+    }
+    
+    return true;
+}
+
+// FUNCTION: numvalidation
+// PURPOSE: Validates numeric inputs for age, PIN, phone, etc.
+function numvalidation(value, minval, maxval) {
+    var num = parseInt(value, 10);
+    if (isNaN(num)) { return false; }
+    if (num < minval || num > maxval) { return false; }
+    return true;
+}
+
+
 function validPassword(value) {
-  return value.length >= MIN_PASSWORD_LENGTH && /[a-zA-Z]/.test(value) && /[0-9]/.test(value);
+  return strvalidation(value, "password");
 }
 
 function login() {
@@ -246,7 +337,7 @@ function login() {
   if (!email.value.trim()) {
     setFieldError(email, "Email is required.");
     ok = false;
-  } else if (!EMAIL_PATTERN.test(email.value.trim())) {
+  } else if (strvalidation(email.value.trim(), "email") === false) {
     setFieldError(email, "Enter a valid email, e.g. you@example.com.");
     ok = false;
   } else {
@@ -287,7 +378,7 @@ function signup() {
   else clearFieldError(nameInput);
 
   if (!email) { setFieldError(emailInput, "Email is required."); ok = false; }
-  else if (!EMAIL_PATTERN.test(email)) { setFieldError(emailInput, "Enter a valid email, e.g. you@example.com."); ok = false; }
+  else if (strvalidation(email, "email") === false) { setFieldError(emailInput, "Enter a valid email, e.g. you@example.com."); ok = false; }
   else clearFieldError(emailInput);
 
   if (!password) { setFieldError(passwordInput, "Password is required."); ok = false; }
