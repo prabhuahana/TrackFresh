@@ -569,15 +569,32 @@ function toggleFavourite(index) {
 }
 
 function markUsed(index) {
-  const foods = getFoods();
-  const item = foods[index];
+  var foods = getFoods();
+  var item = foods[index];
   if (!item) return;
-  const days = daysLeft(item.expiry);
+  var days = daysLeft(item.expiry);
   if (days >= 0) addPoints(POINTS_RULES.useBeforeExpiry, "Used " + item.name + " before expiry");
   else addPoints(POINTS_RULES.preventWaste, "Removed expired " + item.name);
   foods.splice(index, 1);
   saveFoods(foods);
+  showUsedFeedback(item.name);
   refreshFoodViews();
+}
+
+function showUsedFeedback(itemName) {
+  var feedback = document.createElement("div");
+  feedback.className = "used-feedback";
+  feedback.textContent = "Marked \"" + itemName + "\" as used!";
+  document.body.appendChild(feedback);
+  setTimeout(function() {
+    feedback.classList.add("show");
+  }, 10);
+  setTimeout(function() {
+    feedback.classList.remove("show");
+    setTimeout(function() {
+      if (feedback.parentNode) feedback.parentNode.removeChild(feedback);
+    }, 300);
+  }, 1500);
 }
 
 function addToShoppingFromPantry(index) {
@@ -1480,10 +1497,10 @@ function findPrice(name) {
 /* ── Reminders ── */
 
 function loadRemindersPage() {
-  const container = document.getElementById("remindersList");
+  var container = document.getElementById("remindersList");
   if (!container) return;
 
-  const foods = getFoods().slice().sort(function (a, b) { return daysLeft(a.expiry) - daysLeft(b.expiry); });
+  var foods = getFoods().slice().sort(function (a, b) { return daysLeft(a.expiry) - daysLeft(b.expiry); });
   container.innerHTML = "";
 
   if (foods.length === 0) {
@@ -1491,12 +1508,15 @@ function loadRemindersPage() {
     return;
   }
 
-  foods.forEach(function (food) {
-    const days = daysLeft(food.expiry);
-    const idx = getFoods().indexOf(food);
-    const priority = reminderPriority(days);
-    const div = document.createElement("div");
+  var originalFoods = getFoods();
+
+  foods.forEach(function (food, i) {
+    var days = daysLeft(food.expiry);
+    var idx = originalFoods.indexOf(food);
+    var priority = reminderPriority(days);
+    var div = document.createElement("div");
     div.className = "reminder-item " + priority;
+    div.setAttribute("data-food-name", food.name);
     div.innerHTML =
       '<span class="food-emoji">' + (food.emoji || foodEmoji(food.name)) + '</span>' +
       '<div class="reminder-info"><strong>' + food.name + '</strong>' +

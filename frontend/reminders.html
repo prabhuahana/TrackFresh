@@ -56,7 +56,16 @@ ENDFOR
     <img src="Logo_Dark.png" alt="TrackFresh" class="brand-logo brand-logo-dark">
   </a>
   <div class="topbar-actions">
-    <a class="profile-link" href="profile.html" aria-label="Open profile"><img src="Icon_Profile_Dark.png" alt="" class="nav-img-dark"><img src="Icon_Profile_Light.png" alt="" class="nav-img-light"></a>
+    <div class="user-menu-wrap">
+      <button class="avatar-btn" onclick="toggleUserMenu(event)" aria-label="Open user menu">
+        <img src="Icon_Profile_Dark.png" alt="" class="nav-img-dark">
+        <img src="Icon_Profile_Light.png" alt="" class="nav-img-light">
+      </button>
+      <div class="user-menu" id="userMenu">
+        <a href="profile.html">Profile</a>
+        <a href="#" class="menu-logout" onclick="logoutUser(); return false;">Log Out</a>
+      </div>
+    </div>
   </div>
 </div>
 <header>

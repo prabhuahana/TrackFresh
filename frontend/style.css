@@ -28,7 +28,7 @@
   --text-muted: #a8afc0;
   --accent: #7fa77a;
   --accent-dark: #9fd39f;
-  --peach: #d99a8d;
+  --peach: #e39a52;
   --peach-light: #4a3a33;
   --green-light: #3a4a42;
   --border: #4a5068;
@@ -653,6 +653,35 @@ button:hover,
   background: #bf4545;
 }
 
+/* feedback toast for "Used It" button */
+.used-feedback {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--accent-dark);
+  color: #fff;
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 14px;
+  box-shadow: 0 8px 24px rgba(41, 48, 68, 0.25);
+  opacity: 0;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  z-index: 9999;
+  pointer-events: none;
+}
+
+.used-feedback.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+[data-theme="dark"] .used-feedback {
+  background: var(--accent);
+  color: var(--navy);
+}
+
 #foodList button {
   background: var(--danger);
 }
@@ -776,6 +805,67 @@ button:hover,
 .shopping-item.checked label {
   text-decoration: line-through;
   color: var(--text-muted);
+}
+
+/* shopping list cards - distinct background, rounded corners */
+.shopping-list-card {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 20px;
+  border: 1px solid var(--border);
+  box-shadow: 0 2px 8px rgba(41, 48, 68, 0.06);
+}
+
+[data-theme="dark"] .shopping-list-card {
+  background: #252d44;
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* each shopping item row - checkbox left, name middle, delete right */
+.shopping-item-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.shopping-item-row:last-child {
+  border-bottom: none;
+}
+
+.shopping-item-checkbox {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent);
+  flex-shrink: 0;
+}
+
+.shopping-item-text {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 14px;
+  color: var(--text);
+  padding: 4px 0;
+}
+
+.shopping-item-text:focus {
+  outline: none;
+  border-bottom: 1px solid var(--accent);
+}
+
+/* add-item-row layout */
+.add-item-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.add-item-row input {
+  flex: 1;
 }
 
 .staples-grid {
@@ -1302,11 +1392,7 @@ textarea {
 
 
 
-/* ═══════════════════════════════════════════════════════════
-   ═  TRACKFRESH — *the glow-up* (very-16-year-olds edition)  ═
-   All of these rules intentionally come LAST so they safely
-   override the older styles. Pure HTML + CSS energy.   ✨🥑
-   ═══════════════════════════════════════════════════════════ */
+/* main theme styles for the app */
 
 body {
   background:
@@ -1329,7 +1415,7 @@ button:focus-visible {
   border-radius: 10px;
 }
 
-/* ── Theme toggle — impossible to miss, hover is ALWAYS visible ── */
+/* theme toggle button */
 
 .theme-toggle {
   background: var(--surface);
@@ -2068,16 +2154,12 @@ textarea:focus
     max-width: 100%;
   }
 }
-/* ════════════════════════════════════════════════════════════════════
-   FLOATING SIDEBAR (DESKTOP) + LOGO FIX + REMINDER TIERS + FORM ERRORS
-   ════════════════════════════════════════════════════════════════════ */
+/* sidebar, logo, reminder tiers, and form errors */
 
 /* 1 ── Sidebar stays pinned on screen while the page scrolls (desktop/web).
       Mobile keeps its fixed bottom tab bar from the media query above. */
 @media (min-width: 769px) {
-  /* sidebar is permanently pinned to the viewport. position: fixed (not
-     sticky) because the global overflow-x: hidden on html/body breaks
-     sticky positioning in most browsers. */
+  /* sidebar uses fixed positioning so it stays on screen when scrolling */
   aside {
     position: fixed;
     top: 0;
@@ -2114,8 +2196,7 @@ textarea:focus
   }
 }
 
-/* Theme toggle pinned to the very base of the floating sidebar (nav already
-   has flex: 1) so it is always visible, clearly separated from the links */
+/* theme toggle at the base of the sidebar, always visible */
 .sidebar-footer {
   margin-top: auto;
   padding-top: 28px;
@@ -2206,12 +2287,7 @@ input.input-invalid {
   background: rgba(224, 122, 106, 0.10);
 }
 
-/* ════════════════════════════════════════════════════════════════════
-   DASHBOARD / HOME content
-   header + avatar menu · expiry pills · fridge carousel · quick grid.
-   The chrome (sidebar / bottom tab bar / theme toggle) uses the SAME
-   standard structure as every other page: .layout > aside + main.
-   ════════════════════════════════════════════════════════════════════ */
+/* dashboard content: header, expiry, fridge, quick actions */
 
 .dash-main {
   box-sizing: border-box;
@@ -2541,12 +2617,7 @@ input.input-invalid {
   box-shadow: 0 14px 34px rgba(0, 0, 0, 0.5);
 }
 
-/* ════════════════════════════════════════════════════════════════════
-   DASHBOARD — MOBILE (≤768px)
-   The chrome (bottom pill tab bar, full-width main, toggle pill) is
-   inherited from the shared mobile block above — this only tunes the
-   dashboard's own content for small screens.
-   ════════════════════════════════════════════════════════════════════ */
+/* dashboard layout for mobile */
 @media (max-width: 768px) {
   .dash-logo .brand-logo {
     width: 150px;
@@ -2565,17 +2636,9 @@ input.input-invalid {
   }
 }
 
-/* ════════════════════════════════════════════════════════════════════
-   DASHBOARD — DESKTOP (≥769px)
-   The sidebar + toggle chrome is fully inherited from the shared desktop
-   block (sticky 220px aside, sidebar-footer toggle at its base) — the
-   dashboard renders the exact same sidebar as every other page.
-   Only the content grid and dashboard-specific sizing live here.
-   ════════════════════════════════════════════════════════════════════ */
+/* dashboard layout for desktop */
 @media (min-width: 769px) {
-  /* content grid beside the sidebar: clean vertical stack — Expiry full
-     width on top, Fridge carousel beneath, quick actions at the bottom.
-     minmax(0,…) prevents any grid blowout, so the page never scrolls sideways */
+  /* content grid: expiry on top, fridge carousel, quick actions */
   main.dash-main {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
@@ -2652,29 +2715,37 @@ input.input-invalid {
 
 .favs-link {
   display: inline-flex;
-
   align-items: center;
-  gap: 5px;
-  padding: 6px 14px;
-  border-radius: 999px;
-  background: rgba(127, 167, 122, 0.18);
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 20px;
+  background: var(--surface);
   color: var(--accent-dark);
   font-weight: 700;
   font-size: 13px;
   text-decoration: none;
-  border: 1.5px solid rgba(127, 167, 122, 0.35);
-  transition: background 0.15s ease, transform 0.1s ease;
+  border: 1.5px solid var(--accent);
+  box-shadow: 0 2px 8px rgba(41, 48, 68, 0.08);
+  transition: background 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
 }
 
 .favs-link:hover {
-  background: rgba(127, 167, 122, 0.30);
+  background: var(--accent);
+  color: white;
   transform: scale(1.04);
+  box-shadow: 0 4px 12px rgba(127, 167, 122, 0.25);
 }
 
 [data-theme="dark"] .favs-link {
-  background: rgba(127, 167, 122, 0.14);
-  color: var(--accent-light);
-  border-color: rgba(127, 167, 122, 0.25);
+  background: var(--surface);
+  color: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] .favs-link:hover {
+  background: var(--accent);
+  color: var(--navy);
 }
 
 /* ── AI recipe card: horizontal layout with thumbnail + heart toggle ── */
@@ -2769,7 +2840,7 @@ input.input-invalid {
   gap: 10px;
 }
 
-/* ✨ AI badge — top-right, clear of the thumbnail */
+/* AI badge on recipe cards */
 .ai-recipe-badge {
   position: absolute;
   top: 12px;
@@ -2853,5 +2924,19 @@ input.input-invalid {
   .ai-card-title { font-size: 15px; }
   .ai-recipe-badge { right: 88px; font-size: 10px; }
   .ai-card-actions .btn-small { padding: 6px 10px; font-size: 12px; }
+}
+
+/* ── Shopping lists container: responsive grid layout ── */
+.shopping-lists-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+  margin-top: 20px;
+}
+
+@media (max-width: 700px) {
+  .shopping-lists-container {
+    grid-template-columns: 1fr;
+  }
 }
 
