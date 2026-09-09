@@ -50,60 +50,44 @@
   <p>Organize your shopping across multiple lists.</p>
 </header>
 
-<div class="shopping-lists-container">
-  <section class="shopping-list-card">
-    <div class="card-header">
-      <h3>AI List</h3>
-      <button class="btn-small btn-outline" onclick="clearList('aiList')">Clear</button>
-    </div>
-    <div class="shopping-items" id="aiList"></div>
-    <div class="add-item-row">
-      <input type="text" id="aiListInput" placeholder="Add item...">
-      <button class="btn-small" onclick="addItemToList('aiList')">+</button>
-    </div>
-  </section>
-
-  <section class="shopping-list-card">
-    <div class="card-header">
-      <h3>Custom List</h3>
-      <button class="btn-small btn-outline" onclick="clearList('customList')">Clear</button>
-    </div>
-    <div class="shopping-items" id="customList"></div>
-    <div class="add-item-row">
-      <input type="text" id="customListInput" placeholder="Add item...">
-      <button class="btn-small" onclick="addItemToList('customList')">+</button>
-    </div>
-  </section>
-
-  <section class="shopping-list-card">
-    <div class="card-header">
-      <h3>Other List</h3>
-      <button class="btn-small btn-outline" onclick="clearList('otherList1')">Clear</button>
-    </div>
-    <div class="shopping-items" id="otherList1"></div>
-    <div class="add-item-row">
-      <input type="text" id="otherList1Input" placeholder="Add item...">
-      <button class="btn-small" onclick="addItemToList('otherList1')">+</button>
-    </div>
-  </section>
-
-  <section class="shopping-list-card">
-    <div class="card-header">
-      <h3>Other List</h3>
-      <button class="btn-small btn-outline" onclick="clearList('otherList2')">Clear</button>
-    </div>
-    <div class="shopping-items" id="otherList2"></div>
-    <div class="add-item-row">
-      <input type="text" id="otherList2Input" placeholder="Add item...">
-      <button class="btn-small" onclick="addItemToList('otherList2')">+</button>
-    </div>
-  </section>
+<div class="shopping-lists-container" id="shoppingListsContainer">
+  <!-- Lists will be generated dynamically by JavaScript -->
 </div>
+
+<button class="btn btn-outline add-list-btn" id="addListBtn">+ Add New List</button>
 
 </main>
 </div>
 
 <script src="data.js"></script>
 <script src="script.js"></script>
+<script>
+  // Initialize the shopping page when the page loads
+  document.addEventListener("DOMContentLoaded", function() {
+    // Display all shopping lists
+    if (typeof displayAllShoppingLists === "function") {
+      displayAllShoppingLists();
+    }
+    
+    // Add click event to the "Add New List" button
+    var addListBtn = document.getElementById("addListBtn");
+    if (addListBtn) {
+      addListBtn.addEventListener("click", function() {
+        var listName = prompt("Enter a name for your new list:");
+        if (!listName || !listName.trim()) return;
+        
+        var lists = getShoppingList();
+        if (lists[listName.trim()]) {
+          alert("A list with that name already exists.");
+          return;
+        }
+        
+        lists[listName.trim()] = [];
+        saveShoppingList(lists);
+        displayAllShoppingLists();
+      });
+    }
+  });
+</script>
 </body>
 </html>

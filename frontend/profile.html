@@ -84,6 +84,10 @@
     <input type="checkbox" id="notifCheck">
     <label for="notifCheck">Send expiry reminders (browser notifications)</label>
   </div>
+  <div class="checkbox-row">
+    <input type="checkbox" id="aiConsentToggle">
+    <label for="aiConsentToggle">Enable AI Features (Recipe suggestions & AI lists)</label>
+  </div>
 </section>
 
 <section>
@@ -95,5 +99,24 @@
 
 <script src="data.js"></script>
 <script src="script.js"></script>
+<script>
+  // Load AI consent setting when page loads
+  document.addEventListener("DOMContentLoaded", function() {
+    var aiToggle = document.getElementById("aiConsentToggle");
+    if (aiToggle) {
+      // Get the current profile and set the toggle to match
+      var profile = getProfile();
+      aiToggle.checked = (profile.aiConsent !== false);
+      
+      // Save immediately when the toggle is changed
+      aiToggle.addEventListener("change", function() {
+        var p = getProfile();
+        p.aiConsent = aiToggle.checked;
+        saveProfile(p);
+        alert("AI preferences updated!");
+      });
+    }
+  });
+</script>
 </body>
 </html>

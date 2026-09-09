@@ -48,11 +48,20 @@
   <p>Add and manage the food currently in your kitchen.</p>
 </header>
 
-<section>
+<section class="add-food-card">
   <h3>Add Food</h3>
-  <input id="foodName" placeholder="Food name">
-  <input id="purchaseDate" type="date" title="Purchase date">
-  <input id="expiryDate" type="date">
+  <div class="form-group">
+    <label for="foodName">Food Name</label>
+    <input id="foodName" placeholder="e.g. Milk, Eggs, Bread">
+  </div>
+  <div class="form-group">
+    <label for="purchaseDate">Date Bought</label>
+    <input type="date" id="purchaseDate" name="purchaseDate">
+  </div>
+  <div class="form-group">
+    <label for="expiryDate">Expiry Date</label>
+    <input type="date" id="expiryDate" name="expiryDate">
+  </div>
   <div class="quantity-row">
     <input id="quantity" type="number" placeholder="Amount">
     <select id="unit">
@@ -80,8 +89,8 @@
   <button onclick="addFood()">Add Item</button>
 </section>
 
-<section>
-  <h3>Your Food</h3>
+<section class="your-food-card">
+  <h3 class="your-food-heading">Your Food</h3>
   <div id="foodList"><p class="empty-state">No items added yet.</p></div>
 </section>
 

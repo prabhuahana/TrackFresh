@@ -1,5 +1,32 @@
 /* script_new.js - backup copy of the app logic */
 
+/*
+====================================================================
+HOW THE APP WORKS - EXAM PSEUDOCODE:
+====================================================================
+INITIALIZATION:
+    DISPLAY "FreshTrack"
+    CALL applyTheme() function
+
+MAIN PROGRAM LOOP:
+    WHILE user is on page DO
+        IF user adds food THEN
+            CALL addFood() function
+            CALL saveFoods() function
+        ENDIF
+        IF user views inventory THEN
+            CALL getFoods() function
+            DISPLAY food list
+        ENDIF
+        IF user clicks theme toggle THEN
+            CALL toggleTheme() function
+        ENDIF
+    ENDWHILE
+====================================================================
+*/
+
+/* FreshTrack app logic */
+
 function getFoods() {
   return JSON.parse(localStorage.getItem("foods")) || [];
 }
@@ -252,7 +279,15 @@ function clearFieldError(input) {
 }
 
 
-// validation functions - check user input without regex
+/*
+================================================================================
+VALIDATION FUNCTIONS
+These functions check user input without using complex regex patterns.
+================================================================================
+*/
+
+// FUNCTION: strvalidation
+// PURPOSE: Validates string inputs for names, emails, and passwords
 function strvalidation(value, type) {
     var letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
     
@@ -306,6 +341,8 @@ function strvalidation(value, type) {
     return true;
 }
 
+// FUNCTION: numvalidation
+// PURPOSE: Validates numeric inputs for age, PIN, phone, etc.
 function numvalidation(value, minval, maxval) {
     var num = parseInt(value, 10);
     if (isNaN(num)) { return false; }
@@ -907,7 +944,7 @@ async function readJsonResponse(response) {
    Uses the Groq API (no regional blocks) to generate recipe ideas from
    your on-hand inventory. Get a key at https://console.groq.com.
 */
-const GROQ_API_KEY = "YOUR_GROQ_KEY_HERE";
+const GROQ_API_KEY = "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";
 const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
 
 let _aiRunning = false;
@@ -926,7 +963,7 @@ async function generateAiRecipes() {
     status.textContent = "Add groceries in Inventory first.";
     return;
   }
-  if (GROQ_API_KEY === "YOUR_GROQ_KEY_HERE") {
+  if (GROQ_API_KEY === "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") {
     status.textContent = "Paste your Groq API key into the script to unlock AI recipes.";
     return;
   }
@@ -1411,7 +1448,7 @@ function checkReminders() {
   }
 
   if (alerts.length > 0) {
-    new Notification("TrackFresh — Food reminders", {
+    new Notification("FreshTrack — Food reminders", {
       body: alerts.slice(0, 3).join(". ") + (alerts.length > 3 ? "..." : "")
     });
     localStorage.setItem("lastNotifCheck", today);
@@ -1565,7 +1602,7 @@ function importData() {
 }
 
 function deleteAllData() {
-  if (!confirm("Delete ALL your TrackFresh data? This cannot be undone.")) return;
+  if (!confirm("Delete ALL your FreshTrack data? This cannot be undone.")) return;
   localStorage.clear();
   alert("All data deleted.");
   window.location.href = "index.html";

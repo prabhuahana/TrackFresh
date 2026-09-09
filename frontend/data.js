@@ -2,16 +2,16 @@
 
 // food emoji codes - each item gets a short letter badge
 const FOOD_EMOJIS = {
-  milk: "M", bread: "B", egg: "E", eggs: "E", chicken: "C", rice: "R",
-  pasta: "P", tomato: "T", tomatoes: "T", spinach: "S", banana: "B",
-  apple: "A", avocado: "A", cheese: "CH", yogurt: "Y", berries: "B",
-  strawberry: "ST", lemon: "L", onion: "O", garlic: "G", potato: "P",
-  carrot: "C", broccoli: "B", fish: "F", beef: "BF", pork: "P",
-  butter: "BT", cream: "C", lettuce: "L", cucumber: "CU", pepper: "P",
-  mushroom: "M", corn: "C", pumpkin: "P", lentils: "L", beans: "B",
-  tofu: "T", honey: "H", chocolate: "C", coffee: "C", tea: "T",
-  juice: "J", water: "W", flour: "F", sugar: "S", salt: "S",
-  oil: "O", vegetables: "V", fruit: "F", meat: "M", default: "F"
+  milk: "🥛", bread: "🍞", egg: "🥚", eggs: "🥚", chicken: "🐓", rice: "🍚",
+  pasta: "🍝", tomato: "🍅", tomatoes: "🍅", spinach: "🥬", banana: "🍌",
+  apple: "🍎", avocado: "🥑", cheese: "🧀", yogurt: "🍶", berries: "🍓",
+  strawberry: "🍓", lemon: "🍋", onion: "🧅", garlic: "🧄", potato: "🥔",
+  carrot: "🥕", broccoli: "🥦", fish: "🐟", beef: "🥩", pork: "🐖",
+  butter: "🧈", cream: "🍶", lettuce: "🥬", cucumber: "🥒", pepper: "🌶️",
+  mushroom: "🍄", corn: "🌽", pumpkin: "🎃", lentils: "🫘", beans: "🫘",
+  tofu: "T", honey: "🍯", chocolate: "🍫", coffee: "☕", tea: "🍵",
+  juice: "🧃", water: "💧", flour: "🌾", sugar: "🍬", salt: "🧂",
+  oil: "🛢️", vegetables: "🥬", fruit: "🍇", meat: "🥩", default: "📦"
 };
 
 // the different food types we sort things into
@@ -24,36 +24,6 @@ const SHELF_LIFE = {
   dairy: 7, meat: 3, produce: 5, grains: 30, pantry: 90, frozen: 60, beverages: 14, other: 7
 };
 
-// recipe ideas built into the app
-const RECIPES = [
-  {
-    name: "Mac and Cheese",
-    emoji: "M",
-    image: "https://images.unsplash.com/photo-1543339494-b4cd4f7ba686?w=400&h=250&fit=crop",
-    ingredients: ["pasta", "cheese", "milk"],
-    time: "25 min",
-    diet: ["vegetarian", "none"],
-    description: "A warm, easy dinner made with pasta, cheese, and milk.",
-    steps: "1. Cook the pasta.\n2. Warm the milk and add cheese.\n3. Stir in the pasta.\n4. Season and serve.",
-    alternatives: {
-      vegan: { swap: "Use plant milk and vegan cheese", name: "Vegan Mac and Cheese" },
-      "gluten-free": { swap: "Use gluten-free pasta", name: "GF Mac and Cheese" }
-    }
-  },
-  {
-    name: "Fresh Garden Salad",
-    emoji: "S",
-    image: "https://images.unsplash.com/photo-1512621776951-a57141f2egete?w=400&h=250&fit=crop",
-    ingredients: ["lettuce", "tomato", "cucumber"],
-    time: "10 min",
-    diet: ["vegan", "vegetarian", "none"],
-    description: "A crisp salad for using fresh vegetables from the fridge.",
-    steps: "1. Wash the vegetables.\n2. Chop the lettuce, tomato, and cucumber.\n3. Mix in a bowl.\n4. Add dressing and serve.",
-    alternatives: {
-      "no dairy": { swap: "Use a dairy-free dressing", name: "Dairy-Free Garden Salad" }
-    }
-  }
-];
 
 // sample prices from different shops
 const PRICE_DATA = [

@@ -73,9 +73,29 @@
 <script src="data.js"></script>
 <script src="script.js"></script>
 <script>
-  var aiBtn = document.getElementById("aiRecipeButton");
-  if (aiBtn) { aiBtn.addEventListener("click", generateAiRecipes); }
-  if (document.getElementById("seasonalList")) { renderSeasonalRecipes(); }
+  document.addEventListener("DOMContentLoaded", function() {
+    // Find the AI recipe section elements
+    var aiBtn = document.getElementById("aiRecipeButton");
+    var aiStatus = document.getElementById("aiRecipeStatus");
+    var aiList = document.getElementById("aiRecipeList");
+    
+    if (isAiEnabled()) {
+      // AI is enabled - show the generator
+      if (aiBtn) { aiBtn.addEventListener("click", generateAiRecipes); }
+    } else {
+      // AI is disabled - hide the generator and show a message
+      if (aiBtn) { aiBtn.style.display = "none"; }
+      if (aiList) { aiList.style.display = "none"; }
+      if (aiStatus) {
+        aiStatus.innerHTML = "AI features are disabled. You can turn them on anytime in your <a href='profile.html'>Profile settings</a>.";
+        aiStatus.style.color = "var(--text-muted)";
+        aiStatus.style.fontStyle = "italic";
+      }
+    }
+    
+    // Seasonal recipes are always visible
+    if (document.getElementById("seasonalList")) { renderSeasonalRecipes(); }
+  });
 </script>
 </body>
 </html>

@@ -1,22 +1,24 @@
-/* script.js - makes the app interactive: food list, themes, login, etc. */
+/* script.js - TrackFresh app logic: food storage, shopping lists, recipes, themes */
 
-
+// --- Helper: grab saved foods from storage (or empty list if none saved yet) ---
 function getFoods() {
   return JSON.parse(localStorage.getItem("foods")) || [];
 }
 
+// Save the foods array back to storage
 function saveFoods(foods) {
   localStorage.setItem("foods", JSON.stringify(foods));
 }
 
+// Fix up old saved data so it has emoji, category, and purchase date
 function normalizeStoredFoodData() {
-  const foods = getFoods();
-  let changed = false;
-  let i;
+  var foods = getFoods();
+  var changed = false;
+  var i;
 
   for (i = 0; i < foods.length; i++) {
-    const food = foods[i];
-    const nextEmoji = foodEmoji(food.name);
+    var food = foods[i];
+    var nextEmoji = getFoodEmoji(food.name, food.category);
     
     if (food.emoji !== nextEmoji) {
       food.emoji = nextEmoji;
@@ -39,14 +41,61 @@ function normalizeStoredFoodData() {
   }
 }
 
+// Grab shopping lists from storage (handles both old flat format and new multi-list format)
 function getShoppingList() {
-  return JSON.parse(localStorage.getItem("shoppingList")) || [];
+  var stored = localStorage.getItem("shoppingList");
+  var parsed = JSON.parse(stored);
+  
+  // Old version used a flat array, so convert it to the new multi-list object format
+  if (Array.isArray(parsed)) {
+    var converted = getDefaultShoppingLists();
+    converted["My List"] = parsed.map(function(item) {
+      return { name: item.name, checked: item.checked || false };
+    });
+    saveShoppingList(converted);
+    return converted;
+  }
+  
+  if (parsed && typeof parsed === "object") {
+    return parsed;
+  }
+  
+  // Nothing saved yet, return the default two lists
+  return getDefaultShoppingLists();
 }
 
+// Build the default two lists: "AI List" and the user's personal list
+function getDefaultShoppingLists() {
+  var profile = getProfile();
+  var userName = profile.name || "";
+  var userListName = userName ? userName + "'s List" : "My List";
+  
+  var defaults = {};
+  defaults["AI List"] = [];
+  defaults[userListName] = [];
+  
+  return defaults;
+}
+
+// Save the shopping lists object back to storage
 function saveShoppingList(list) {
   localStorage.setItem("shoppingList", JSON.stringify(list));
 }
 
+// Figure out what to call the user's personal list (uses their profile name)
+function getUserNameForList() {
+  var profile = getProfile();
+  var userName = profile.name || "";
+  return userName ? userName + "'s List" : "My List";
+}
+
+// Check if user has consented to AI features in their profile
+function isAiEnabled() {
+  var profile = getProfile();
+  return (profile.aiConsent !== false);
+}
+
+// Default profile settings for a new user
 function getDefaultProfile() {
   return {
     name: "", email: "", passwordHash: "",
@@ -59,19 +108,21 @@ function getDefaultProfile() {
     pinnedTiles: ["inventory", "shopping", "recipes", "reminders"],
     points: 0,
     lastWeeklyAdd: null,
-    streak: 0
+    streak: 0,
+    aiConsent: true
   };
 }
 
+// Load the user's profile, merging saved data with defaults
 function getProfile() {
-  const defaultProfile = getDefaultProfile();
-  const stored = localStorage.getItem("profile");
-  const storedProfile = JSON.parse(stored);
+  var defaultProfile = getDefaultProfile();
+  var stored = localStorage.getItem("profile");
+  var storedProfile = JSON.parse(stored);
   
-  // Merge stored profile with defaults
-  let profile = defaultProfile;
+  // Start with defaults, then overwrite with whatever the user has saved
+  var profile = defaultProfile;
   if (storedProfile) {
-    let key;
+    var key;
     for (key in storedProfile) {
       profile[key] = storedProfile[key];
     }
@@ -80,6 +131,7 @@ function getProfile() {
   return profile;
 }
 
+// Save the profile object back to storage
 function saveProfile(profile) {
   localStorage.setItem("profile", JSON.stringify(profile));
 }
@@ -90,8 +142,9 @@ function hashPassword(pw) {
   return String(h);
 }
 
-/* ── Theme & Colours ── */
+// --- Theme & Colours ---
 
+// Apply the saved theme (light/dark) and any custom colours
 function applyTheme() {
   const p = getProfile();
   document.documentElement.setAttribute("data-theme", p.theme || "light");
@@ -121,8 +174,9 @@ function applyCustomColors() {
   if (p.customPeach) document.documentElement.style.setProperty("--peach", p.customPeach);
 }
 
-/* ── Points ── */
+// --- Points System ---
 
+// Add points to the user's profile and update the display
 function addPoints(amount, reason) {
   const p = getProfile();
   p.points = (p.points || 0) + amount;
@@ -137,8 +191,9 @@ function updatePointsDisplay() {
   if (el2) el2.textContent = getProfile().points || 0;
 }
 
-/* ── Date helpers ── */
+// --- Date Helpers ---
 
+// Calculate how many days until a food expires
 function daysLeft(date) {
   const today = new Date(); today.setHours(0, 0, 0, 0);
   const expiry = new Date(date); expiry.setHours(0, 0, 0, 0);
@@ -166,8 +221,9 @@ function expiryLabel(days) {
   return "Expires in " + days + " days";
 }
 
-/* ── Reminder urgency tiers ── */
+// --- Reminder Urgency Tiers ---
 
+// Determine how urgent a reminder is based on days until expiry
 function reminderPriority(days) {
   if (days <= 0) return "critical"; /* expiring immediately (or already expired) */
   if (days <= 2) return "high";     /* expiring within 2 days */
@@ -187,32 +243,123 @@ function reminderTierClass(priority) {
 
 function todayStr() { return new Date().toISOString().split("T")[0]; }
 
-/* ── Food emoji ── */
+// --- Food Emoji ---
 
-function foodEmoji(name) {
-  const n = (name || "").toLowerCase().trim();
+// Pick an emoji for a food based on its name
+// Get the emoji for a food item using the FOOD_EMOJIS dictionary from data.js
+function getFoodEmoji(name, category) {
+  if (!name) return "🍴";
   
-  if (!n) {
-    return "F";
+  var cleanName = name.trim().toLowerCase();
+
+  // 1. Check the FOOD_EMOJIS dictionary from data.js first
+  if (typeof FOOD_EMOJIS !== "undefined" && FOOD_EMOJIS[cleanName]) {
+    return FOOD_EMOJIS[cleanName];
   }
-  
-  const parts = n.split(" ");
-  let initials = "";
-  let i;
-  
-  for (i = 0; i < parts.length && i < 2; i++) {
-    if (parts[i]) {
-      initials = initials + parts[i].charAt(0).toUpperCase();
-    }
+
+  // 2. Direct name matching for common foods
+  if (cleanName.indexOf("milk") !== -1) return "🥛";
+  if (cleanName.indexOf("butter") !== -1) return "🧈";
+  if (cleanName.indexOf("cheese") !== -1) return "🧀";
+  if (cleanName.indexOf("pasta") !== -1 || cleanName.indexOf("spaghetti") !== -1) return "🍝";
+  if (cleanName.indexOf("bread") !== -1) return "🍞";
+  if (cleanName.indexOf("egg") !== -1) return "🥚";
+  if (cleanName.indexOf("apple") !== -1) return "🍎";
+  if (cleanName.indexOf("banana") !== -1) return "🍌";
+  if (cleanName.indexOf("chicken") !== -1 || cleanName.indexOf("meat") !== -1) return "🍗";
+  if (cleanName.indexOf("fish") !== -1 || cleanName.indexOf("salmon") !== -1) return "🐟";
+  if (cleanName.indexOf("rice") !== -1) return "🍚";
+  if (cleanName.indexOf("tomato") !== -1) return "🍅";
+  if (cleanName.indexOf("carrot") !== -1) return "🥕";
+  if (cleanName.indexOf("broccoli") !== -1) return "🥦";
+  if (cleanName.indexOf("mushroom") !== -1) return "🍄";
+  if (cleanName.indexOf("onion") !== -1) return "🧅";
+  if (cleanName.indexOf("garlic") !== -1) return "🧄";
+  if (cleanName.indexOf("potato") !== -1) return "🥔";
+  if (cleanName.indexOf("corn") !== -1) return "🌽";
+  if (cleanName.indexOf("pepper") !== -1) return "🌶️";
+  if (cleanName.indexOf("lemon") !== -1) return "🍋";
+  if (cleanName.indexOf("avocado") !== -1) return "🥑";
+  if (cleanName.indexOf("berry") !== -1 || cleanName.indexOf("berries") !== -1) return "🍓";
+  if (cleanName.indexOf("grape") !== -1) return "🍇";
+  if (cleanName.indexOf("watermelon") !== -1) return "🍉";
+  if (cleanName.indexOf("peach") !== -1) return "🍑";
+  if (cleanName.indexOf("cherry") !== -1) return "🍒";
+  if (cleanName.indexOf("pineapple") !== -1) return "🍍";
+  if (cleanName.indexOf("mango") !== -1) return "🥭";
+  if (cleanName.indexOf("cream") !== -1) return "🍶";
+  if (cleanName.indexOf("yogurt") !== -1) return "🍶";
+  if (cleanName.indexOf("honey") !== -1) return "🍯";
+  if (cleanName.indexOf("chocolate") !== -1) return "🍫";
+  if (cleanName.indexOf("coffee") !== -1) return "☕";
+  if (cleanName.indexOf("tea") !== -1) return "🍵";
+  if (cleanName.indexOf("juice") !== -1) return "🧃";
+  if (cleanName.indexOf("water") !== -1) return "💧";
+  if (cleanName.indexOf("flour") !== -1) return "🌾";
+  if (cleanName.indexOf("sugar") !== -1) return "🍬";
+  if (cleanName.indexOf("salt") !== -1) return "🧂";
+  if (cleanName.indexOf("oil") !== -1) return "🛢️";
+  if (cleanName.indexOf("vegetable") !== -1 || cleanName.indexOf("veggie") !== -1) return "🥬";
+  if (cleanName.indexOf("fruit") !== -1) return "🍇";
+  if (cleanName.indexOf("frozen") !== -1) return "🧊";
+  if (cleanName.indexOf("drink") !== -1 || cleanName.indexOf("beverage") !== -1) return "🥤";
+  if (cleanName.indexOf("beer") !== -1 || cleanName.indexOf("wine") !== -1) return "🍺";
+  if (cleanName.indexOf("pizza") !== -1) return "🍕";
+  if (cleanName.indexOf("burger") !== -1) return "🍔";
+  if (cleanName.indexOf("fries") !== -1 || cleanName.indexOf("chip") !== -1) return "🍟";
+  if (cleanName.indexOf("taco") !== -1) return "🌮";
+  if (cleanName.indexOf("burrito") !== -1) return "🌯";
+  if (cleanName.indexOf("sandwich") !== -1) return "🥪";
+  if (cleanName.indexOf("salad") !== -1) return "🥗";
+  if (cleanName.indexOf("popcorn") !== -1) return "🍿";
+  if (cleanName.indexOf("cookie") !== -1 || cleanName.indexOf("biscuit") !== -1) return "🍪";
+  if (cleanName.indexOf("cake") !== -1) return "🍰";
+  if (cleanName.indexOf("pie") !== -1) return "🥧";
+  if (cleanName.indexOf("donut") !== -1) return "🍩";
+  if (cleanName.indexOf("candy") !== -1 || cleanName.indexOf("sweet") !== -1) return "🍭";
+  if (cleanName.indexOf("ice cream") !== -1) return "🍦";
+  if (cleanName.indexOf("canned") !== -1 || cleanName.indexOf("can") !== -1) return "🥫";
+  if (cleanName.indexOf("cereal") !== -1) return "🥣";
+  if (cleanName.indexOf("soup") !== -1 || cleanName.indexOf("stew") !== -1) return "🍲";
+  if (cleanName.indexOf("noodle") !== -1) return "🍜";
+  if (cleanName.indexOf("curry") !== -1) return "🍛";
+  if (cleanName.indexOf("sushi") !== -1) return "🍣";
+  if (cleanName.indexOf("tofu") !== -1) return "🫘";
+  if (cleanName.indexOf("bean") !== -1 || cleanName.indexOf("beans") !== -1) return "🫘";
+  if (cleanName.indexOf("lentil") !== -1) return "🫘";
+  if (cleanName.indexOf("nut") !== -1 || cleanName.indexOf("nuts") !== -1) return "🥜";
+  if (cleanName.indexOf("pumpkin") !== -1) return "🎃";
+  if (cleanName.indexOf("lettuce") !== -1 || cleanName.indexOf("spinach") !== -1) return "🥬";
+  if (cleanName.indexOf("cucumber") !== -1) return "🥒";
+  if (cleanName.indexOf("orange") !== -1) return "🍊";
+  if (cleanName.indexOf("lime") !== -1) return "🍋";
+  if (cleanName.indexOf("pear") !== -1) return "🍐";
+  if (cleanName.indexOf("coconut") !== -1) return "🥥";
+  if (cleanName.indexOf("kiwi") !== -1) return "🥝";
+  if (cleanName.indexOf("ginger") !== -1) return "🫚";
+
+  // 3. Category matching as fallback
+  if (category) {
+    var cat = category.toLowerCase();
+    if (cat.indexOf("dairy") !== -1) return "🥛";
+    if (cat.indexOf("produce") !== -1 || cat.indexOf("veg") !== -1 || cat.indexOf("fruit") !== -1) return "🥦";
+    if (cat.indexOf("bakery") !== -1 || cat.indexOf("grain") !== -1) return "🍞";
+    if (cat.indexOf("meat") !== -1) return "🥩";
+    if (cat.indexOf("frozen") !== -1) return "🧊";
+    if (cat.indexOf("beverage") !== -1) return "🥤";
+    if (cat.indexOf("pantry") !== -1) return "🥫";
   }
-  
-  if (!initials) {
-    return "F";
-  }
-  
-  return initials;
+
+  // 4. Default fallback
+  return "🍴";
 }
 
+// Keep the old name as an alias so existing code still works
+function foodEmoji(name) {
+  return getFoodEmoji(name, "");
+}
+
+// Guess what category a food belongs to based on its name (e.g., "milk" -> "dairy")
 function guessCategory(name) {
     var n = name.toLowerCase();
     var i;
@@ -244,8 +391,9 @@ function guessCategory(name) {
     return "pantry";
 }
 
-/* ── Rotting detection ── */
+// --- Rotting Detection ---
 
+// Check if a food item is likely rotting based on its expiry and purchase date
 function isRotting(food) {
   const days = daysLeft(food.expiry);
   if (days < 0) return true;
@@ -261,7 +409,10 @@ function getRottingFoods() {
   return getFoods().filter(isRotting);
 }
 
-// validation functions - check user input without regex
+// --- Input Validation ---
+
+// Validate string inputs (names, emails, passwords)
+// Returns true if valid, false if not
 function strvalidation(value, type) {
     var letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
     
@@ -315,22 +466,25 @@ function strvalidation(value, type) {
     return true;
 }
 
+// Validate a number is within a range (e.g., quantity between 1 and 999)
+// Returns true if valid, false if not
 function numvalidation(value, minval, maxval) {
     var num = parseInt(value, 10);
-    if (isNaN(num)) { return false; }
-    if (num < minval || num > maxval) { return false; }
+    if (isNaN(num)) { return false; } // Not a number
+    if (num < minval || num > maxval) { return false; } // Out of range
     return true;
 }
 
-/* ── Auth ── */
+// --- Authentication ---
 
-const MIN_PASSWORD_LENGTH = 6;
+var MIN_PASSWORD_LENGTH = 6;
 
+// Show an error message next to an input field
 function setFieldError(input, message) {
   if (!input) return;
   input.classList.add("input-invalid");
   input.setAttribute("aria-invalid", "true");
-  let error = input.nextElementSibling;
+  var error = input.nextElementSibling;
   if (!error || !error.classList.contains("field-error")) {
     error = document.createElement("p");
     error.className = "field-error";
@@ -339,24 +493,28 @@ function setFieldError(input, message) {
   error.textContent = message;
 }
 
+// Remove the error message from an input field
 function clearFieldError(input) {
   if (!input) return;
   input.classList.remove("input-invalid");
   input.removeAttribute("aria-invalid");
-  const error = input.nextElementSibling;
+  var error = input.nextElementSibling;
   if (error && error.classList.contains("field-error")) error.remove();
 }
 
+// Check if a password meets the requirements (using strvalidation)
 function validPassword(value) {
   return strvalidation(value, "password");
 }
 
+// Handle user login: validate inputs and check password hash
 function login() {
-  const email = document.querySelector('input[type="email"]');
-  const password = document.querySelector('input[type="password"]');
-  const profile = getProfile();
-  let ok = true;
+  var email = document.querySelector('input[type="email"]');
+  var password = document.querySelector('input[type="password"]');
+  var profile = getProfile();
+  var ok = true;
 
+  // Validate email field
   if (!email.value.trim()) {
     setFieldError(email, "Email is required.");
     ok = false;
@@ -367,6 +525,7 @@ function login() {
     clearFieldError(email);
   }
 
+  // Validate password field
   if (!password.value) {
     setFieldError(password, "Password is required.");
     ok = false;
@@ -375,27 +534,29 @@ function login() {
   }
   if (!ok) return;
 
+  // Check if the entered password matches the saved hash
   if (profile.passwordHash && hashPassword(password.value) !== profile.passwordHash) {
     setFieldError(password, "Incorrect password. Try again.");
     return;
   }
 
+  // Login successful - save email and go to dashboard
   profile.email = email.value.trim();
   saveProfile(profile);
   window.location.href = "dashboard.html";
 }
 
 function signup() {
-  const inputs = document.querySelectorAll(".login-card input");
-  const nameInput = inputs[0];
-  const emailInput = inputs[1];
-  const passwordInput = inputs[2];
-  const confirmInput = inputs[3];
-  const name = nameInput ? nameInput.value.trim() : "";
-  const email = emailInput ? emailInput.value.trim() : "";
-  const password = passwordInput ? passwordInput.value : "";
-  const confirm = confirmInput ? confirmInput.value : "";
-  let ok = true;
+  var inputs = document.querySelectorAll(".login-card input");
+  var nameInput = inputs[0];
+  var emailInput = inputs[1];
+  var passwordInput = inputs[2];
+  var confirmInput = inputs[3];
+  var name = nameInput ? nameInput.value.trim() : "";
+  var email = emailInput ? emailInput.value.trim() : "";
+  var password = passwordInput ? passwordInput.value : "";
+  var confirm = confirmInput ? confirmInput.value : "";
+  var ok = true;
 
   if (!name) { setFieldError(nameInput, "Please enter your name."); ok = false; }
   else clearFieldError(nameInput);
@@ -414,10 +575,15 @@ function signup() {
 
   if (!ok) return;
 
-  const profile = getProfile();
+  // Get AI consent from checkbox (if it exists on the page)
+  var aiConsentChecked = document.getElementById("aiConsentCheck");
+  var aiConsent = aiConsentChecked ? aiConsentChecked.checked : true;
+
+  var profile = getProfile();
   profile.name = name;
   profile.email = email;
   profile.passwordHash = hashPassword(password);
+  profile.aiConsent = aiConsent;
   saveProfile(profile);
   addPoints(POINTS_RULES.addFood, "Welcome bonus");
   window.location.href = "profile.html";
@@ -453,8 +619,9 @@ function changePassword() {
   current.value = ""; newPw.value = ""; confirm.value = "";
 }
 
-/* ── Nav ── */
+// --- Navigation ---
 
+// Highlight the current page in the sidebar nav
 function highlightNav() {
   const page = window.location.pathname.split("/").pop();
   const links = document.querySelectorAll("nav a, .profile-link");
@@ -470,8 +637,9 @@ function highlightNav() {
   }
 }
 
-/* ── Quantity check ── */
+// --- Quantity Check ---
 
+// Warn the user if they're adding an unusual quantity of something
 function checkQuantity(name, quantity, unit) {
   name = name.toLowerCase();
   if (unit === "kg" && quantity > 20) return "Are you sure you have " + quantity + "kg of " + name + "?";
@@ -482,27 +650,78 @@ function checkQuantity(name, quantity, unit) {
   return null;
 }
 
-/* ── Food CRUD ── */
+// --- Food CRUD (Create, Read, Update, Delete) ---
 
+// Add a new food item to the fridge after validating the inputs
 function addFood() {
-  const name = document.getElementById("foodName").value.trim();
-  const expiry = document.getElementById("expiryDate").value;
-  const quantity = Number(document.getElementById("quantity").value);
-  const unit = document.getElementById("unit").value;
-  const favourite = document.getElementById("favouriteCheck") ? document.getElementById("favouriteCheck").checked : false;
-  const category = document.getElementById("foodCategory") ? document.getElementById("foodCategory").value : guessCategory(name);
-  const purchaseDate = document.getElementById("purchaseDate") ? document.getElementById("purchaseDate").value : todayStr();
+  // Get raw input values
+  var nameRaw = document.getElementById("foodName").value.trim();
+  var expiry = document.getElementById("expiryDate").value;
+  var qtyRaw = document.getElementById("quantity").value.trim();
+  var unit = document.getElementById("unit").value;
+  var favourite = document.getElementById("favouriteCheck") ? document.getElementById("favouriteCheck").checked : false;
+  var category = document.getElementById("foodCategory") ? document.getElementById("foodCategory").value : guessCategory(nameRaw);
+  var purchaseDate = document.getElementById("purchaseDate") ? document.getElementById("purchaseDate").value : todayStr();
 
-  if (!name || !expiry || isNaN(quantity)) { alert("Please complete all fields"); return; }
+  // 1. Validate food name using strvalidation (must be a valid name with letters)
+  if (!nameRaw) {
+    alert("Please enter a food name.");
+    return;
+  }
+  if (strvalidation(nameRaw, "name") === false) {
+    alert("Food name can only contain letters, spaces, hyphens, and apostrophes.");
+    return;
+  }
+  // Check length (max 30 characters)
+  if (nameRaw.length > 30) {
+    alert("Food name is too long (max 30 characters).");
+    return;
+  }
 
-  const warning = checkQuantity(name, quantity, unit);
+  // 1b. Check for non-food items (block "laptop", "cat", etc.)
+  var nonFoodList = [
+    "laptop", "computer", "phone", "iphone", "ipad", "screen",
+    "cat", "dog", "pet", "kitten", "puppy",
+    "chair", "table", "desk", "couch",
+    "shoe", "sock", "shirt", "pants", "clothes",
+    "car", "bike", "book", "pen", "pencil", "charger"
+  ];
+  var enteredNameLower = nameRaw.toLowerCase();
+  for (var nf = 0; nf < nonFoodList.length; nf++) {
+    if (enteredNameLower.indexOf(nonFoodList[nf]) !== -1) {
+      alert("'" + nameRaw + "' is not an edible grocery item! Please enter real food.");
+      return;
+    }
+  }
+
+  // 2. Validate expiry date is provided
+  if (!expiry) {
+    alert("Please select an expiry date.");
+    return;
+  }
+
+  // 3. Validate quantity using numvalidation (must be between 1 and 999)
+  if (!qtyRaw) {
+    alert("Please enter a quantity.");
+    return;
+  }
+  if (numvalidation(qtyRaw, 1, 999) === false) {
+    alert("Quantity must be a whole number between 1 and 999.");
+    return;
+  }
+  var quantity = parseInt(qtyRaw, 10);
+
+  // 4. Check for unusual quantities and warn the user
+  var warning = checkQuantity(nameRaw, quantity, unit);
   if (warning && !confirm(warning)) return;
 
-  const foods = getFoods();
-  foods.push({ name, expiry, quantity, unit, favourite, category, purchaseDate, emoji: foodEmoji(name) });
+  // All validations passed - add the food item
+  var foods = getFoods();
+  foods.push({ name: nameRaw, expiry: expiry, quantity: quantity, unit: unit, favourite: favourite, category: category, purchaseDate: purchaseDate, emoji: getFoodEmoji(nameRaw, category) });
   saveFoods(foods);
-  addPoints(POINTS_RULES.addFood, "Added " + name);
+  addPoints(POINTS_RULES.addFood, "Added " + nameRaw);
 
+  // Clear the form
   document.getElementById("foodName").value = "";
   document.getElementById("expiryDate").value = "";
   document.getElementById("quantity").value = "";
@@ -513,26 +732,30 @@ function addFood() {
   checkReminders();
 }
 
+// Remove a food item from the fridge
 function removeFood(index) {
-  const foods = getFoods();
+  var foods = getFoods();
   foods.splice(index, 1);
   saveFoods(foods);
   refreshFoodViews();
 }
 
+// Toggle whether a food is a weekly favourite (auto-added to shopping list)
 function toggleFavourite(index) {
-  const foods = getFoods();
+  var foods = getFoods();
   foods[index].favourite = !foods[index].favourite;
   saveFoods(foods);
   displayFood();
   loadStaples();
 }
 
+// Mark a food as used: remove it and award points
 function markUsed(index) {
   var foods = getFoods();
   var item = foods[index];
   if (!item) return;
   var days = daysLeft(item.expiry);
+  // Award more points if used before expiry, fewer if expired
   if (days >= 0) addPoints(POINTS_RULES.useBeforeExpiry, "Used " + item.name + " before expiry");
   else addPoints(POINTS_RULES.preventWaste, "Removed expired " + item.name);
   foods.splice(index, 1);
@@ -541,6 +764,7 @@ function markUsed(index) {
   refreshFoodViews();
 }
 
+// Show a quick popup message when an item is marked as used
 function showUsedFeedback(itemName) {
   var feedback = document.createElement("div");
   feedback.className = "used-feedback";
@@ -557,38 +781,22 @@ function showUsedFeedback(itemName) {
   }, 1500);
 }
 
+// Add an item from the fridge to the user's shopping list
 function addToShoppingFromPantry(index) {
-  const foods = getFoods();
-  const item = foods[index];
+  var foods = getFoods();
+  var item = foods[index];
   
   if (!item) {
     return;
   }
   
-  const list = getShoppingList();
-  let found = false;
-  let i;
-  
-  // Check if item already in shopping list
-  for (i = 0; i < list.length; i++) {
-    if (list[i].name.toLowerCase() === item.name.toLowerCase()) {
-      found = true;
-      break;
-    }
-  }
-  
-  if (!found) {
-    list.push({
-      name: item.name,
-      checked: false,
-      fromFavourite: false
-    });
-    saveShoppingList(list);
-  }
+  // Add item to the user's personal shopping list
+  addItemToUserList(item.name);
   
   alert(item.name + " added to shopping list.");
 }
 
+// Refresh all pages that show food data (dashboard, inventory, reminders, etc.)
 function refreshFoodViews() {
   displayFood();
   loadDashboard();
@@ -597,8 +805,9 @@ function refreshFoodViews() {
   loadRottingSection();
 }
 
-/* ── Inventory display ── */
+// --- Inventory Display ---
 
+// Display all food items in the fridge, sorted by expiry date
 function displayFood() {
   const foodList = document.getElementById("foodList");
   if (!foodList) {
@@ -636,21 +845,17 @@ function displayFood() {
       div.className = div.className + " urgent";
     }
 
-    const emoji = food.emoji || foodEmoji(food.name);
-    const star = food.favourite ? "★" : "☆";
-    const starClass = food.favourite ? " active" : "";
+    const emoji = getFoodEmoji(food.name, food.category);
     const category = food.category || "other";
     const expiryClassStr = expiryClass(days);
     const expiryLabelStr = expiryLabel(days);
     const rottenNote = rotten ? " · <strong>May be spoiling</strong>" : "";
 
+    // Build the food item card HTML (no star button)
     div.innerHTML =
       '<div class="food-info">' +
         '<span class="food-emoji">' + emoji + '</span>' +
-        '<div><h3>' + food.name +
-          ' <button class="favourite-star' + starClass +
-          '" onclick="toggleFavourite(' + idx + ')" title="Favourite">' +
-          star + '</button></h3>' +
+        '<div><h3>' + food.name + '</h3>' +
         '<p>Quantity: ' + food.quantity + food.unit + ' · ' + category + '</p>' +
         '<p class="' + expiryClassStr + '">' + expiryLabelStr + rottenNote + '</p></div>' +
       '</div>' +
@@ -664,8 +869,9 @@ function displayFood() {
   }
 }
 
-/* ── Dashboard ── */
+// --- Dashboard ---
 
+// Load and display the dashboard with food summary and quick actions
 function loadDashboard() {
   if (document.getElementById("expiryList") || document.getElementById("fridgeCarousel")) {
     loadHomeExpiry();
@@ -682,8 +888,9 @@ function loadDashboard() {
   updatePointsDisplay();
 }
 
-/* ── Home screen (mobile mockup) renders ── */
+// --- Home Screen Renders ---
 
+// Get the CSS class for the expiry tier (used on dashboard cards)
 function dashExpiryTier(days) {
   if (days <= 2) return "critical"; /* within 2 days */
   if (days <= 7) return "medium";   /* around a week */
@@ -746,7 +953,7 @@ function loadFridgeCarousel() {
     card.href = "inventory.html";
     const qty = food.quantity || 1;
     card.innerHTML =
-      '<div class="fridge-thumb"><span>' + (food.emoji || foodEmoji(food.name)) + '</span></div>' +
+      '<div class="fridge-thumb"><span>' + getFoodEmoji(food.name, food.category) + '</span></div>' +
       '<p class="fridge-name">' + food.name + '</p>' +
       '<p class="fridge-sub">' + qty + ' | ' + formatExpiryDate(food.expiry) + '</p>';
     wrap.appendChild(card);
@@ -791,7 +998,7 @@ function loadRottingSection() {
     div.className = "food rotten";
     div.innerHTML =
       '<div class="food-info">' +
-        '<span class="food-emoji">' + (food.emoji || foodEmoji(food.name)) + '</span>' +
+        '<span class="food-emoji">' + getFoodEmoji(food.name, food.category) + '</span>' +
         '<div><h3>' + food.name + '</h3>' +
         '<p class="expiry-rotten">' + expiryLabel(daysLeft(food.expiry)) + ' — check before eating</p></div>' +
       '</div>' +
@@ -834,7 +1041,7 @@ function loadPantrySection() {
         div.className = "food urgent";
         div.innerHTML =
           '<div class="food-info">' +
-            '<span class="food-emoji">' + (food.emoji || foodEmoji(food.name)) + '</span>' +
+            '<span class="food-emoji">' + getFoodEmoji(food.name, food.category) + '</span>' +
             '<div><h3>' + food.name + '</h3>' +
             '<p class="' + expiryClass(days) + '">' + expiryLabel(days) + '</p>' +
             '<p>Quantity: ' + food.quantity + food.unit + '</p></div>' +
@@ -855,7 +1062,7 @@ function loadPantrySection() {
     div.className = "food";
     div.innerHTML =
       '<div class="food-info">' +
-        '<span class="food-emoji">' + (food.emoji || foodEmoji(food.name)) + '</span>' +
+        '<span class="food-emoji">' + getFoodEmoji(food.name, food.category) + '</span>' +
         '<div><h3>' + food.name + '</h3>' +
         '<p>Quantity: ' + food.quantity + food.unit + '</p>' +
         '<p class="' + expiryClass(days) + '">' + expiryLabel(days) + '</p></div>' +
@@ -884,8 +1091,9 @@ function loadSeasonalTip() {
   el.textContent = tips[new Date().getMonth()];
 }
 
-/* ── Recipes ── */
+// --- Recipes ---
 
+// Find recipes that match what's in the fridge
 function getMatchingRecipes() {
   const foods = getFoods();
   const profile = getProfile();
@@ -1008,60 +1216,79 @@ async function readJsonResponse(response) {
   }
 }
 
-/* === Groq AI recipe suggester ===
-   Uses the Groq API (no regional blocks) to generate recipe ideas from
-   your on-hand inventory. Get a key at https://console.groq.com.
-*/
+// === Groq AI Recipe Suggester ===
+// Uses the Groq API to generate recipe ideas based on what's in the fridge
+// Get a free key at https://console.groq.com
 const GROQ_API_KEY = "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";
 const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
 
+// Flag to stop user from clicking the button twice while a request is running
 let _aiRunning = false;
 
+// Main function: asks Groq for recipe ideas based on fridge ingredients
 async function generateAiRecipes() {
-  const button = document.getElementById("aiRecipeButton");
-  const status = document.getElementById("aiRecipeStatus");
-  const container = document.getElementById("aiRecipeList");
+  // Grab the button, status text, and recipe container from the page
+  var button = document.getElementById("aiRecipeButton");
+  var status = document.getElementById("aiRecipeStatus");
+  var container = document.getElementById("aiRecipeList");
+  
+  // If any of these elements are missing, stop here (wrong page)
   if (!button || !status || !container) return;
+  
+  // If a request is already running, ignore the click
   if (_aiRunning) return;
 
-  const inventory = getFoods().map(function (food) {
+  // Build a list of ingredients from the fridge, including quantity if available
+  // Example: "eggs (12 pieces), milk (2 L)"
+  var inventory = getFoods().map(function (food) {
     return food.name + (food.quantity ? " (" + food.quantity + (food.unit ? " " + food.unit : "") + ")" : "");
   });
+  
+  // Guard clause: make sure there is food to cook with before sending a request
   if (inventory.length === 0) {
     status.textContent = "Add groceries in Inventory first.";
     return;
   }
-  if (GROQ_API_KEY === "YOUR_GROQ_KEY_HERE") {
+  
+  // Check if the user has replaced the placeholder API key with a real one
+  if (GROQ_API_KEY === "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") {
     status.textContent = "Paste your Groq API key into the script to unlock AI recipes.";
     return;
   }
 
+  // Lock the button so the user can't spam clicks while waiting
   _aiRunning = true;
   button.disabled = true;
   button.textContent = "Searching for recipes...";
   status.textContent = "Finding recipes from your groceries...";
   container.innerHTML = "";
 
-  const controller = new AbortController();
-  const timeoutId = setTimeout(function() { controller.abort(); }, 30000);
+  // Set up a timeout so the request doesn't hang forever (30 seconds max)
+  var controller = new AbortController();
+  var timeoutId = setTimeout(function() { controller.abort(); }, 30000);
 
   try {
-    const response = await fetch(GROQ_API_URL, {
+    // Send the POST request to the Groq API
+    var response = await fetch(GROQ_API_URL, {
       method: "POST",
       signal: controller.signal,
       headers: {
+        // Tell the server we're sending JSON data
         "Content-Type": "application/json",
+        // Bearer token authentication with the API key
         "Authorization": "Bearer " + GROQ_API_KEY
       },
       body: JSON.stringify({
-        model: "openai/gpt-oss-20b",
-        max_tokens: 800,
+        model: "openai/gpt-oss-20b", // Fast model on Groq
+        max_tokens: 800, // Limit response size to avoid hitting free-tier quotas
         messages: [
           {
+            // System message tells the AI how to behave and what format to return
             role: "system",
             content: "You are a chef. Return ONLY a valid JSON object with a \"recipes\" key containing an array of 2 recipes. No markdown, no backticks. Each recipe: {\"name\":\"string\",\"description\":\"string\",\"time\":\"string\",\"ingredientsUsed\":[\"string\"]}."
           },
           {
+            // User message sends the actual ingredients from the fridge
             role: "user",
             content: "Here are my current ingredients: " + inventory.join(", ")
           }
@@ -1069,39 +1296,54 @@ async function generateAiRecipes() {
       })
     });
 
-    const rawText = await response.text();
+    // Get the raw text response from the server
+    var rawText = await response.text();
 
+    // Check if the server returned an HTTP error code (e.g., 401, 429)
     if (!response.ok) {
-      let errorData = {};
+      var errorData = {};
       try { errorData = JSON.parse(rawText); } catch (_) { /* not JSON */ }
       console.error("Groq API Error Status:", response.status, errorData, rawText);
-      const apiMessage = (errorData.error && errorData.error.message) || "";
+      var apiMessage = (errorData.error && errorData.error.message) || "";
       throw new Error(apiMessage || "Groq request failed (HTTP " + response.status + ").");
     }
 
-    let data;
+    // Parse the outer JSON wrapper from the API response
+    var data;
     try { data = JSON.parse(rawText); }
     catch (e) {
       console.error("Could not parse Groq JSON body:", rawText);
       throw new Error("Groq returned an unexpected reply. Please try again.");
     }
 
-    const rawContent = data.choices && data.choices[0] && data.choices[0].message ? data.choices[0].message.content : "";
+    // Extract the actual text content from the AI's message
+    var rawContent = data.choices && data.choices[0] && data.choices[0].message ? data.choices[0].message.content : "";
     console.log("Raw Groq content:", rawContent);
-    let wrapper = {};
+    
+    // Try to parse the AI's response as JSON
+    // The AI should return either an array directly or an object with a "recipes" key
+    var wrapper = {};
     try {
       wrapper = JSON.parse(rawContent);
     } catch (e) {
-      if (typeof rawContent === "object" && rawContent !== null) { wrapper = rawContent; console.log("Content was already an object, using it directly."); } else { console.error("Could not parse Groq content:", rawContent); throw new Error("Groq returned an invalid response. Please try again."); }
+      // If it's already an object (not a string), use it directly
+      if (typeof rawContent === "object" && rawContent !== null) {
+        wrapper = rawContent;
+        console.log("Content was already an object, using it directly.");
+      } else {
+        console.error("Could not parse Groq content:", rawContent);
+        throw new Error("Groq returned an invalid response. Please try again.");
+      }
     }
 
-    let recipes = Array.isArray(wrapper) ? wrapper : (wrapper.recipes || []);
+    // Extract the recipes array from the wrapper (handle both formats)
+    var recipes = Array.isArray(wrapper) ? wrapper : (wrapper.recipes || []);
     if (!Array.isArray(recipes) || recipes.length === 0) {
       throw new Error("Groq did not return any recipes. Please try again.");
     }
 
-    // Simple helper: pick a food photo based on the recipe name
-    // Uses clear if/else so it's easy to read and add more categories
+    // Helper function: pick a nice food photo from Unsplash based on the recipe name
+    // Uses keyword matching so each recipe type gets a relevant image
     function getRecipeImage(recipeName) {
       var title = recipeName.toLowerCase();
 
@@ -1126,23 +1368,45 @@ async function generateAiRecipes() {
       } else if (title.includes("dessert") || title.includes("cake") || title.includes("sweet")) {
         return "https://images.unsplash.com/photo-1563729784474-d77dbb933a9e?w=400&auto=format&fit=crop&q=80";
       } else {
-        // Default food image if no keywords match
+        // Fallback image if no keywords match
         return "https://images.unsplash.com/photo-1498837167922-ddd27525d352?w=400&auto=format&fit=crop&q=80";
       }
     }
 
-    // Default image used if an Unsplash URL fails to load
+    // Fallback image in case an Unsplash URL fails to load
     var defaultImage = "https://images.unsplash.com/photo-1498837167922-ddd27525d352?w=400&auto=format&fit=crop&q=80";
 
+    // Loop through the recipes and build a card for each one (max 6)
     recipes.slice(0, 6).forEach(function (recipe, idx) {
       var card = document.createElement("article");
       card.className = "recipe-card ai-recipe-card";
 
+      // Build a Google search link so the user can find the full recipe
       var cleanTitle = encodeURIComponent((recipe.name || "recipe").trim() + " recipe");
       var recipeLink = "https://www.google.com/search?q=" + cleanTitle;
+      
+      // Check if this recipe is already saved in favorites
       var savedKey = "ai_saved_" + idx;
       var isSaved = localStorage.getItem(savedKey) === "1";
+      
+      // Pick a relevant image for this recipe
       var imgUrl = getRecipeImage(recipe.name);
+
+      // Package up the recipe data so it can be saved to favorites
+      var recipeData = {
+        name: recipe.name || "Untitled recipe",
+        description: recipe.description || "",
+        image: imgUrl,
+        link: recipeLink,
+        time: recipe.time || "",
+        ingredientsUsed: recipe.ingredientsUsed || recipe.ingredients || []
+      };
+      
+      // Check if this recipe is already in favorites
+      var favs = getFavorites();
+      var isFav = favs.some(function(f) {
+        return f.name.toLowerCase() === recipeData.name.toLowerCase();
+      });
 
       card.innerHTML =
         '<div class="ai-card-inner">' +
@@ -1155,8 +1419,9 @@ async function generateAiRecipes() {
             '</div>' +
             '<div class="ai-card-actions">' +
               '<a href="' + recipeLink + '" target="_blank" rel="noopener noreferrer" class="btn btn-small">View Recipe ↑</a>' +
-              '<button class="ai-heart-btn' + (isSaved ? " saved" : "") + '" data-idx="' + idx + '" title="Save recipe">' +
-                (isSaved ? "♥" : "♡") +
+              '<button class="btn-small btn-peach" onclick="markRecipeCooked(\'' + (recipe.name || "").replace(/'/g, "\\'") + '\', this)">Mark as cooked</button>' +
+              '<button class="ai-heart-btn' + (isFav ? " saved" : "") + '" data-recipe="' + encodeURIComponent(JSON.stringify(recipeData)) + '" title="Save recipe">' +
+                (isFav ? "♥" : "♡") +
               '</button>' +
             '</div>' +
           '</div>' +
@@ -1166,37 +1431,36 @@ async function generateAiRecipes() {
         '</div>' +
         '<span class="ai-recipe-badge">✨ AI</span>';
 
-      card.querySelector(".ai-heart-btn").addEventListener("click", function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        var k = "ai_saved_" + this.dataset.idx;
-        var now = localStorage.getItem(k) === "1";
-        if (now) { localStorage.removeItem(k); this.textContent = "♡"; this.classList.remove("saved"); }
-        else      { localStorage.setItem(k, "1");  this.textContent = "♥"; this.classList.add("saved"); }
-      });
-
       container.appendChild(card);
     });
 
+    // Success! Show how many recipes were found
     status.textContent = "Found " + recipes.length + " recipe" + (recipes.length > 1 ? "s" : "") + " from your groceries.";
   } catch (error) {
+    // Handle different types of errors with user-friendly messages
     if (error.name === "AbortError") {
+      // This happens if the 30-second timeout kicked in
       status.textContent = "Request timed out after 30 seconds. Please try again.";
     } else if (error.name === "TypeError") {
+      // Usually means no internet or CORS issue
       status.textContent = "Could not reach Groq (network or CORS blocked the request).";
     } else {
+      // Show the error message from the API or a generic fallback
       status.textContent = error.message || "Something went wrong while finding recipes.";
     }
   } finally {
-    clearTimeout(timeoutId);
-    _aiRunning = false;
-    button.disabled = false;
-    button.textContent = "Get AI recipe ideas";
+    // Always clean up, whether the request succeeded or failed
+    clearTimeout(timeoutId); // Cancel the timeout so it doesn't fire later
+    _aiRunning = false; // Unlock the button so the user can try again
+    button.disabled = false; // Re-enable the button
+    button.textContent = "Get AI recipe ideas"; // Reset the button text
   }
 }
 
 
-/* ── Seasonal + Favourites ── */
+// --- Seasonal Recipes & Favourites ---
+
+// List of seasonal recipes that are always shown (not AI-generated)
 var SEASONAL_RECIPES = [
   {name:"Pumpkin Soup",description:"A warming autumn classic — silky smooth and full of flavour.",time:"35 min",ingredientsUsed:["pumpkin","onion","garlic","vegetable stock","cream"],url:"https://www.bbcgoodfood.com/recipes/pumpkin-soup"},
   {name:"Slow Cooker Beef Stew",description:"Hearty winter comfort food. Layer vegetables and beef, come home to dinner.",time:"6–8 hrs",ingredientsUsed:["beef chuck","carrots","potatoes","onion","beef stock"],url:"https://www.bbcgoodfood.com/recipes/slow-cooker-beef-stew"},
@@ -1204,6 +1468,7 @@ var SEASONAL_RECIPES = [
   {name:"Summer Berry Pavlova",description:"Light, fluffy meringue topped with fresh cream and seasonal berries.",time:"1 hr 20 min",ingredientsUsed:["egg whites","caster sugar","double cream","strawberries","raspberries"],url:"https://www.bbcgoodfood.com/recipes/berry-pavlova"}
 ];
 
+// Render the seasonal recipes into the page
 function renderSeasonalRecipes() {
   var c = document.getElementById("seasonalList");
   if (!c) return;
@@ -1211,30 +1476,43 @@ function renderSeasonalRecipes() {
   SEASONAL_RECIPES.forEach(function(r, i) { c.appendChild(buildRecipeCard(r, i)); });
 }
 
+// Load the user's saved favorite recipes from storage
 function getFavorites() {
-  try { return JSON.parse(localStorage.getItem("favRecipes") || "[]"); }
+  try { return JSON.parse(localStorage.getItem("favoriteRecipes") || "[]"); }
   catch (e) { return []; }
 }
 
-function saveFavorites(list) { localStorage.setItem("favRecipes", JSON.stringify(list)); }
+// Save the favorites list back to storage
+function saveFavorites(list) { localStorage.setItem("favoriteRecipes", JSON.stringify(list)); }
 
+// Toggle a recipe in/out of favorites (returns true if added, false if removed)
 function toggleFavorite(recipe) {
   var favs = getFavorites();
-  var idx = favs.findIndex(function(f) { return f.name === recipe.name; });
-  if (idx !== -1) { favs.splice(idx, 1); }
-  else { favs.push(recipe); }
+  var idx = favs.findIndex(function(f) { return f.name.toLowerCase() === recipe.name.toLowerCase(); });
+  if (idx !== -1) {
+    // Already in favorites, so remove it
+    favs.splice(idx, 1);
+  } else {
+    // Not in favorites, so add it
+    favs.push(recipe);
+  }
   saveFavorites(favs);
-  return idx === -1;
+  return idx === -1; // true if added, false if removed
 }
 
+// Build a recipe card element for the page (used for seasonal recipes)
 function buildRecipeCard(recipe, idx) {
   var card = document.createElement("article");
   card.className = "recipe-card ai-recipe-card";
+  
+  // Build a link to find the recipe (either saved URL or Google search)
   var cleanTitle = encodeURIComponent((recipe.name || "recipe").trim() + " recipe");
   var recipeLink = recipe.url || ("https://www.google.com/search?q=" + cleanTitle);
   var defaultImage = "https://images.unsplash.com/photo-1498837167922-ddd27525d352?w=400&auto=format&fit=crop&q=80";
+  
+  // Check if this recipe is already in the user's favorites
   var favs = getFavorites();
-  var isSaved = favs.some(function(f) { return f.name === recipe.name; });
+  var isSaved = favs.some(function(f) { return f.name.toLowerCase() === recipe.name.toLowerCase(); });
   card.innerHTML =
     '<div class="ai-card-inner"><div class="ai-card-body">' +
     '<h4 class="ai-card-title"><a href="' + recipeLink + '" target="_blank" rel="noopener noreferrer">' + (recipe.name || "Untitled recipe") + '</a></h4>' +
@@ -1242,6 +1520,7 @@ function buildRecipeCard(recipe, idx) {
     '<div class="ai-card-meta"><span class="ai-meta-tag">' + (recipe.time || "—") + '</span></div>' +
     '<div class="ai-card-actions">' +
     '<a href="' + recipeLink + '" target="_blank" rel="noopener noreferrer" class="btn btn-small">View Recipe</a>' +
+    '<button class="btn-small btn-peach" onclick="markRecipeCooked(\'' + (recipe.name || "").replace(/'/g, "\\'") + '\', this)">Mark as cooked</button>' +
     '<button class="ai-heart-btn' + (isSaved ? " saved" : "") + '" data-recipe="' + encodeURIComponent(JSON.stringify(recipe)) + '">' + (isSaved ? "\u2665" : "\u2661") + '</button>' +
     '</div></div>' +
     '<div class="ai-card-thumb-wrap"><img class="ai-card-thumb" src="' + (recipe.imageUrl || defaultImage) + '" alt="' + (recipe.name || "recipe") + '" onerror="this.src=defaultImage"></div></div>' +
@@ -1249,113 +1528,198 @@ function buildRecipeCard(recipe, idx) {
   return card;
 }
 
+// Load and display the user's saved favorite recipes on the favorites page
 function loadFavorites() {
   var c = document.getElementById("favoritesList");
   if (!c) return;
   c.innerHTML = "";
   var favs = getFavorites();
-  if (favs.length === 0) { c.innerHTML = '<p class="empty-state">No favourites saved yet! Click the heart on any recipe to save it here.</p>'; return; }
+  if (favs.length === 0) {
+    c.innerHTML = '<p class="empty-state">No favourites saved yet! Click the heart on any recipe to save it here.</p>';
+    return;
+  }
+  // Build a card for each saved favorite
   favs.forEach(function(r) { c.appendChild(buildRecipeCard(r, -1)); });
 }
 
+// Handle clicks on the heart button to save/remove favorites
 document.addEventListener("click", function(e) {
   var btn = e.target.closest(".ai-heart-btn");
   if (!btn) return;
   e.preventDefault();
+  
+  // Get the recipe data stored in the button's data attribute
   var recipeData = btn.getAttribute("data-recipe");
   if (!recipeData) return;
+  
   var recipe;
   try { recipe = JSON.parse(decodeURIComponent(recipeData)); }
   catch (err) { return; }
+  
+  // Toggle the recipe in/out of favorites
   var saved = toggleFavorite(recipe);
+  
+  // Update the button appearance (filled heart = saved, empty heart = not saved)
   btn.textContent = saved ? "\u2665" : "\u2661";
   btn.classList.toggle("saved", saved);
 });
 
+// Add missing ingredients from a recipe to the user's shopping list
 function addRecipeToShopping(recipeName) {
-  const recipe = RECIPES.find(function (r) { return r.name === recipeName; });
+  var recipe = RECIPES.find(function (r) { return r.name === recipeName; });
   if (!recipe) return;
-  const pantry = getFoods().map(function (f) { return f.name.toLowerCase(); });
-  const list = getShoppingList();
+  
+  // Get what's already in the fridge so we don't add duplicates
+  var pantry = getFoods().map(function (f) { return f.name.toLowerCase(); });
+  var userListName = getUserNameForList();
+  var lists = getShoppingList();
+  
+  if (!lists[userListName]) {
+    lists[userListName] = [];
+  }
+  
+  // For each ingredient in the recipe, check if we already have it
   recipe.ingredients.forEach(function (ing) {
-    const have = pantry.some(function (p) { return p.includes(ing) || ing.includes(p); });
-    /* always append missing ingredients, even if the same name is already on the list */
+    var have = pantry.some(function (p) { return p.includes(ing) || ing.includes(p); });
+    // Only add to shopping list if we don't already have it
     if (!have) {
-      list.push({ name: ing.charAt(0).toUpperCase() + ing.slice(1), checked: false, fromFavourite: false });
+      var itemName = ing.charAt(0).toUpperCase() + ing.slice(1);
+      lists[userListName].push({ name: itemName, checked: false });
     }
   });
-  saveShoppingList(list);
+  saveShoppingList(lists);
   alert("Missing ingredients added to shopping list.");
 }
 
 function markRecipeCooked(recipeName, btn) {
   addPoints(POINTS_RULES.addRecipe, "Cooked " + recipeName);
-  const card = btn && btn.closest ? btn.closest(".recipe-card") : null;
+  var card = btn && btn.closest ? btn.closest(".recipe-card") : null;
   if (!card) {
     alert("Nice! +" + POINTS_RULES.addRecipe + " points for cooking.");
     return;
   }
   card.remove();
-  const container = document.getElementById("recipeList");
-  if (container && !container.querySelector(".recipe-card")) {
-    const done = document.createElement("p");
-    done.className = "empty-state";
-    done.textContent = "You've cooked everything here — nice! 🎉";
-    container.appendChild(done);
+  
+  // Check all possible recipe containers
+  var aiContainer = document.getElementById("aiRecipeList");
+  var seasonalContainer = document.getElementById("seasonalList");
+  
+  // Show "cooked everything" message if a container is now empty
+  if (aiContainer && !aiContainer.querySelector(".recipe-card")) {
+    aiContainer.innerHTML = "<p class=\"empty-state\">You've cooked everything here — nice! 🎉</p>";
   }
+  if (seasonalContainer && !seasonalContainer.querySelector(".recipe-card")) {
+    seasonalContainer.innerHTML = "<p class=\"empty-state\">You've cooked everything here — nice! 🎉</p>";
+  }
+  
+  alert("Nice! +" + POINTS_RULES.addRecipe + " points for cooking " + recipeName + "!");
 }
 
-/* ── Shopping ── */
+// --- Shopping Lists ---
 
-function addShoppingItem() {
-  const input = document.getElementById("shopItem");
-  const name = input.value.trim();
+// Add a new item to a specific shopping list
+function addItemToList(listName) {
+  var input = document.getElementById(listName + "Input");
+  if (!input) return;
+  var name = input.value.trim();
   if (!name) return;
-  const list = getShoppingList();
-  list.push({ name: name, checked: false, fromFavourite: false });
-  saveShoppingList(list);
-  input.value = "";
-  displayShoppingList();
-  loadPriceCompare();
-}
-
-function toggleShopItem(index) {
-  const list = getShoppingList();
-  list[index].checked = !list[index].checked;
-  saveShoppingList(list);
-  displayShoppingList();
-}
-
-function removeShopItem(index) {
-  const list = getShoppingList();
-  list.splice(index, 1);
-  saveShoppingList(list);
-  displayShoppingList();
-  loadPriceCompare();
-}
-
-function clearCheckedItems() {
-  saveShoppingList(getShoppingList().filter(function (i) { return !i.checked; }));
-  displayShoppingList();
-}
-
-function addStapleToList(name) {
-  const list = getShoppingList();
-  if (!list.some(function (s) { return s.name.toLowerCase() === name.toLowerCase(); })) {
-    list.push({ name: name, checked: false, fromFavourite: true });
-    saveShoppingList(list);
+  
+  var lists = getShoppingList();
+  if (!lists[listName]) {
+    lists[listName] = [];
   }
-  displayShoppingList();
+  lists[listName].push({ name: name, checked: false });
+  saveShoppingList(lists);
+  input.value = "";
+  displayAllShoppingLists();
+}
+
+// Toggle item checked state in a specific list
+function toggleShopItemInList(listName, itemIndex) {
+  var lists = getShoppingList();
+  if (!lists[listName] || !lists[listName][itemIndex]) return;
+  lists[listName][itemIndex].checked = !lists[listName][itemIndex].checked;
+  saveShoppingList(lists);
+  displayAllShoppingLists();
+}
+
+// Remove item from a specific list
+function removeShopItemFromList(listName, itemIndex) {
+  var lists = getShoppingList();
+  if (!lists[listName]) return;
+  lists[listName].splice(itemIndex, 1);
+  saveShoppingList(lists);
+  displayAllShoppingLists();
+}
+
+// Clear all items from a specific list
+function clearList(listName) {
+  var lists = getShoppingList();
+  if (!lists[listName]) return;
+  lists[listName] = [];
+  saveShoppingList(lists);
+  displayAllShoppingLists();
+}
+
+// Add a new custom list
+function addNewList() {
+  var listName = prompt("Enter a name for your new list:");
+  if (!listName || !listName.trim()) return;
+  
+  var lists = getShoppingList();
+  if (lists[listName.trim()]) {
+    alert("A list with that name already exists.");
+    return;
+  }
+  
+  lists[listName.trim()] = [];
+  saveShoppingList(lists);
+  displayAllShoppingLists();
+}
+
+// Add item to the user's personal list (used by + Shop button)
+function addItemToUserList(itemName) {
+  var lists = getShoppingList();
+  var userListName = getUserNameForList();
+  
+  if (!lists[userListName]) {
+    lists[userListName] = [];
+  }
+  
+  // Check if item already exists in the list
+  var exists = false;
+  var i;
+  for (i = 0; i < lists[userListName].length; i++) {
+    if (lists[userListName][i].name.toLowerCase() === itemName.toLowerCase()) {
+      exists = true;
+      break;
+    }
+  }
+  
+  if (!exists) {
+    lists[userListName].push({ name: itemName, checked: false });
+    saveShoppingList(lists);
+  }
+}
+
+// Add staple item to user's list
+function addStapleToList(name) {
+  addItemToUserList(name);
+  displayAllShoppingLists();
 }
 
 function addAllStaples() {
-  getFoods().filter(function (f) { return f.favourite; }).forEach(function (f) { addStapleToList(f.name); });
+  var favourites = getFoods().filter(function (f) { return f.favourite; });
+  var i;
+  for (i = 0; i < favourites.length; i++) {
+    addItemToUserList(favourites[i].name);
+  }
   addPoints(10, "Added weekly staples");
 }
 
 function autoWeeklyStaples() {
-  const profile = getProfile();
-  const today = todayStr();
+  var profile = getProfile();
+  var today = todayStr();
   if (profile.lastWeeklyAdd === today) { alert("Weekly staples already added today."); return; }
   addAllStaples();
   profile.lastWeeklyAdd = today;
@@ -1363,24 +1727,124 @@ function autoWeeklyStaples() {
   alert("Weekly staples added to your shopping list!");
 }
 
-function displayShoppingList() {
-  const container = document.getElementById("shoppingList");
+// Display all shopping lists on the shopping page
+function displayAllShoppingLists() {
+  var container = document.getElementById("shoppingListsContainer");
   if (!container) return;
-  const list = getShoppingList();
+  
+  var lists = getShoppingList();
   container.innerHTML = "";
-  if (list.length === 0) {
-    container.innerHTML = '<p class="empty-state">Your shopping list is empty.</p>';
+  
+  var listNames = Object.keys(lists);
+  
+  // Filter out "AI List" if user has not consented to AI features
+  if (!isAiEnabled()) {
+    listNames = listNames.filter(function(name) {
+      return name !== "AI List";
+    });
+  }
+  
+  if (listNames.length === 0) {
+    container.innerHTML = '<p class="empty-state">No shopping lists yet.</p>';
     return;
   }
-  list.forEach(function (item, index) {
-    const div = document.createElement("div");
-    div.className = "shopping-item" + (item.checked ? " checked" : "");
-    div.innerHTML =
-      '<input type="checkbox"' + (item.checked ? " checked" : "") + ' onchange="toggleShopItem(' + index + ')" id="shop-' + index + '">' +
-      '<label for="shop-' + index + '">' + foodEmoji(item.name) + " " + item.name + (item.fromFavourite ? " ★" : "") + '</label>' +
-      '<button class="btn-small btn-danger" style="margin-left:auto;" onclick="removeShopItem(' + index + ')">✕</button>';
-    container.appendChild(div);
-  });
+  
+  var listIndex;
+  for (listIndex = 0; listIndex < listNames.length; listIndex++) {
+    var listName = listNames[listIndex];
+    var items = lists[listName];
+    
+    var section = document.createElement("section");
+    section.className = "shopping-list-card";
+    
+    var header = document.createElement("div");
+    header.className = "card-header";
+    
+    var title = document.createElement("h3");
+    title.textContent = listName;
+    
+    var clearBtn = document.createElement("button");
+    clearBtn.className = "btn-small btn-outline";
+    clearBtn.textContent = "Clear";
+    clearBtn.onclick = (function(name) {
+      return function() { clearList(name); };
+    })(listName);
+    
+    header.appendChild(title);
+    header.appendChild(clearBtn);
+    
+    var itemsDiv = document.createElement("div");
+    itemsDiv.className = "shopping-items";
+    itemsDiv.id = listName.replace(/\s+/g, "") + "Items";
+    
+    var itemIndex;
+    for (itemIndex = 0; itemIndex < items.length; itemIndex++) {
+      var item = items[itemIndex];
+      var div = document.createElement("div");
+      div.className = "shopping-item" + (item.checked ? " checked" : "");
+      
+      var checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      checkbox.checked = item.checked;
+      checkbox.id = listName.replace(/\s+/g, "") + "-item-" + itemIndex;
+      checkbox.onchange = (function(lName, idx) {
+        return function() { toggleShopItemInList(lName, idx); };
+      })(listName, itemIndex);
+      
+      var label = document.createElement("label");
+      label.setAttribute("for", checkbox.id);
+      label.textContent = getFoodEmoji(item.name, "") + " " + item.name;
+      
+      var removeBtn = document.createElement("button");
+      removeBtn.className = "btn-small btn-danger";
+      removeBtn.style.marginLeft = "auto";
+      removeBtn.textContent = "✕";
+      removeBtn.onclick = (function(lName, idx) {
+        return function() { removeShopItemFromList(lName, idx); };
+      })(listName, itemIndex);
+      
+      div.appendChild(checkbox);
+      div.appendChild(label);
+      div.appendChild(removeBtn);
+      itemsDiv.appendChild(div);
+    }
+    
+    if (items.length === 0) {
+      var emptyMsg = document.createElement("p");
+      emptyMsg.className = "empty-state";
+      emptyMsg.textContent = "No items yet.";
+      itemsDiv.appendChild(emptyMsg);
+    }
+    
+    var addRow = document.createElement("div");
+    addRow.className = "add-item-row";
+    
+    var input = document.createElement("input");
+    input.type = "text";
+    input.id = listName.replace(/\s+/g, "") + "Input";
+    input.placeholder = "Add item...";
+    
+    var addBtn = document.createElement("button");
+    addBtn.className = "btn-small";
+    addBtn.textContent = "+";
+    addBtn.onclick = (function(name) {
+      return function() { addItemToList(name); };
+    })(listName);
+    
+    addRow.appendChild(input);
+    addRow.appendChild(addBtn);
+    
+    section.appendChild(header);
+    section.appendChild(itemsDiv);
+    section.appendChild(addRow);
+    
+    container.appendChild(section);
+  }
+}
+
+// Legacy function for backward compatibility
+function displayShoppingList() {
+  displayAllShoppingLists();
 }
 
 function loadStaples() {
@@ -1395,7 +1859,7 @@ function loadStaples() {
   favourites.forEach(function (food) {
     const chip = document.createElement("button");
     chip.className = "staple-chip";
-    chip.textContent = foodEmoji(food.name) + " " + food.name + " +";
+    chip.textContent = getFoodEmoji(food.name, food.category) + " " + food.name + " +";
     chip.onclick = function () { addStapleToList(food.name); };
     container.appendChild(chip);
   });
@@ -1454,8 +1918,9 @@ function findPrice(name) {
   return PRICE_DATA.find(function (p) { return n.includes(p.item) || p.item.includes(n); });
 }
 
-/* ── Reminders ── */
+// --- Reminders ---
 
+// Load and display the reminders page with upcoming expiry dates
 function loadRemindersPage() {
   var container = document.getElementById("remindersList");
   if (!container) return;
@@ -1478,15 +1943,33 @@ function loadRemindersPage() {
     div.className = "reminder-item " + priority;
     div.setAttribute("data-food-name", food.name);
     div.innerHTML =
-      '<span class="food-emoji">' + (food.emoji || foodEmoji(food.name)) + '</span>' +
+      '<span class="food-emoji">' + getFoodEmoji(food.name, food.category) + '</span>' +
       '<div class="reminder-info"><strong>' + food.name + '</strong>' +
       '<p class="' + reminderTierClass(priority) + '">' + expiryLabel(days) +
         ' <span class="tier-pill tier-' + priority + '">' + reminderTierLabel(priority) + '</span></p></div>' +
       '<div class="food-actions">' +
-        (priority !== "low" ? '<button class="btn-small btn-outline" onclick="markUsed(' + idx + ')">Used it</button>' : '') +
+        '<button class="used-btn btn-small btn-outline" data-id="' + idx + '">Used It</button>' +
         '<a class="btn btn-small" href="recipes.html">Recipe</a>' +
       '</div>';
     container.appendChild(div);
+  });
+
+  // Add click handler for "Used It" buttons on reminders page
+  container.addEventListener("click", function(e) {
+    if (e.target && e.target.classList.contains("used-btn")) {
+      var itemId = Number(e.target.getAttribute("data-id"));
+      var foods = getFoods();
+      var item = foods[itemId];
+      if (item) {
+        // Remove item from foods
+        foods.splice(itemId, 1);
+        saveFoods(foods);
+        // Award points
+        addPoints(POINTS_RULES.useBeforeExpiry, "Used " + item.name);
+        // Re-render reminders
+        loadRemindersPage();
+      }
+    }
   });
 }
 
@@ -1520,7 +2003,7 @@ function checkReminders() {
   }
 
   if (alerts.length > 0) {
-    new Notification("TrackFresh — Food reminders", {
+    new Notification("FreshTrack — Food reminders", {
       body: alerts.slice(0, 3).join(". ") + (alerts.length > 3 ? "..." : "")
     });
     localStorage.setItem("lastNotifCheck", today);
@@ -1547,9 +2030,10 @@ function enableNotifications() {
   });
 }
 
-/* ── Profile ── */
+// --- Profile ---
 
-const PREF_OPTIONS = ["no nuts", "no dairy", "low sugar", "organic", "quick meals", "budget-friendly"];
+// List of food preference options the user can choose from
+var PREF_OPTIONS = ["no nuts", "no dairy", "low sugar", "organic", "quick meals", "budget-friendly"];
 
 function loadProfile() {
   const p = getProfile();
@@ -1619,7 +2103,7 @@ function renderPinSections(pinned) {
 }
 
 function saveProfileForm() {
-  const p = getProfile();
+  var p = getProfile();
   p.name = document.getElementById("profileName").value.trim();
   p.email = document.getElementById("profileEmail").value.trim();
   p.diet = document.getElementById("profileDiet").value;
@@ -1629,14 +2113,30 @@ function saveProfileForm() {
   p.customAccent = document.getElementById("customAccent") ? document.getElementById("customAccent").value : "";
   p.customPeach = document.getElementById("customPeach") ? document.getElementById("customPeach").value : "";
 
+  // Save AI consent toggle (if it exists on the page)
+  var aiToggle = document.getElementById("aiConsentToggle");
+  if (aiToggle) {
+    p.aiConsent = aiToggle.checked;
+  }
+
   p.preferences = [];
-  document.querySelectorAll("#prefChips .pref-chip.selected").forEach(function (c) { p.preferences.push(c.textContent); });
+  var prefChips = document.querySelectorAll("#prefChips .pref-chip.selected");
+  var i;
+  for (i = 0; i < prefChips.length; i++) {
+    p.preferences.push(prefChips[i].textContent);
+  }
 
   p.pinnedTiles = [];
-  document.querySelectorAll("#pinTiles .pref-chip.selected").forEach(function (c) { p.pinnedTiles.push(c.dataset.id); });
+  var pinTiles = document.querySelectorAll("#pinTiles .pref-chip.selected");
+  for (i = 0; i < pinTiles.length; i++) {
+    p.pinnedTiles.push(pinTiles[i].dataset.id);
+  }
 
   p.pinnedSections = [];
-  document.querySelectorAll("#pinSections .pref-chip.selected").forEach(function (c) { p.pinnedSections.push(c.dataset.id); });
+  var pinSections = document.querySelectorAll("#pinSections .pref-chip.selected");
+  for (i = 0; i < pinSections.length; i++) {
+    p.pinnedSections.push(pinSections[i].dataset.id);
+  }
 
   saveProfile(p);
   applyCustomColors();
@@ -1674,14 +2174,15 @@ function importData() {
 }
 
 function deleteAllData() {
-  if (!confirm("Delete ALL your TrackFresh data? This cannot be undone.")) return;
+  if (!confirm("Delete ALL your FreshTrack data? This cannot be undone.")) return;
   localStorage.clear();
   alert("All data deleted.");
   window.location.href = "index.html";
 }
 
-/* ── Init ── */
+// --- Initialization ---
 
+// Run setup when the page finishes loading
 document.addEventListener("DOMContentLoaded", function () {
   normalizeStoredFoodData();
   applyTheme();
@@ -1705,8 +2206,9 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 
-/* ── Shopping List Page ── */
+// --- Shopping List Page (old system, kept for compatibility) ---
 
+// Get a specific shopping list by name (old system)
 function getShoppingListByName(name) {
   var stored = localStorage.getItem("shoppingList_" + name);
   if (stored) {
@@ -1806,7 +2308,9 @@ function initShoppingPage() {
 if (document.querySelector(".shopping-lists-container")) {
   if (document.readyState === "loading") { document.addEventListener("DOMContentLoaded", initShoppingPage); } else { initShoppingPage(); }
 
-/* ── Seasonal & Favourites ── */
+// --- Seasonal Recipes & Favourites (old system, kept for compatibility) ---
+
+// List of seasonal recipes that are always shown (old system)
 var SEASONAL_RECIPES = [
   { name: "Classic Margherita Pizza", description: "Crispy thin crust, tomato sauce, fresh mozzarella and basil. A crowd favourite.", time: "30 min", ingredientsUsed: ["flour", "tomatoes", "cheese"] },
   { name: "Chicken Stir-Fry", description: "Quick chicken strips with mixed vegetables in a savoury soy-ginger sauce.", time: "20 min", ingredientsUsed: ["chicken", "vegetables", "soy sauce"] },
