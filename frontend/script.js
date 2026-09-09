@@ -45,36 +45,42 @@ function normalizeStoredFoodData() {
 function getShoppingList() {
   var stored = localStorage.getItem("shoppingList");
   var parsed = JSON.parse(stored);
-  
-  // Old version used a flat array, so convert it to the new multi-list object format
+
+  // Old version used a flat array, so convert it into the "AI List"
   if (Array.isArray(parsed)) {
     var converted = getDefaultShoppingLists();
-    converted["My List"] = parsed.map(function(item) {
+    converted["AI List"] = parsed.map(function(item) {
       return { name: item.name, checked: item.checked || false };
     });
     saveShoppingList(converted);
     return converted;
   }
-  
+
   if (parsed && typeof parsed === "object") {
+    // Drop any old "My List" / "[Name]'s List" lists left over from before
+    var changed = false;
+    var key;
+    for (key in parsed) {
+      if (key === "My List" || key.indexOf("'s List") !== -1) {
+        if (parsed[key] && parsed[key].length) {
+          if (!parsed["AI List"]) { parsed["AI List"] = []; }
+          parsed["AI List"] = parsed["AI List"].concat(parsed[key]);
+        }
+        delete parsed[key];
+        changed = true;
+      }
+    }
+    if (changed) { saveShoppingList(parsed); }
     return parsed;
   }
-  
-  // Nothing saved yet, return the default two lists
+
+  // Nothing saved yet, return the default single list
   return getDefaultShoppingLists();
 }
 
-// Build the default two lists: "AI List" and the user's personal list
+// Build the default lists - just one "AI List" to start with
 function getDefaultShoppingLists() {
-  var profile = getProfile();
-  var userName = profile.name || "";
-  var userListName = userName ? userName + "'s List" : "My List";
-  
-  var defaults = {};
-  defaults["AI List"] = [];
-  defaults[userListName] = [];
-  
-  return defaults;
+  return { "AI List": [] };
 }
 
 // Save the shopping lists object back to storage
@@ -82,11 +88,9 @@ function saveShoppingList(list) {
   localStorage.setItem("shoppingList", JSON.stringify(list));
 }
 
-// Figure out what to call the user's personal list (uses their profile name)
+// The main shopping list is the "AI List" (no more personal My List)
 function getUserNameForList() {
-  var profile = getProfile();
-  var userName = profile.name || "";
-  return userName ? userName + "'s List" : "My List";
+  return "AI List";
 }
 
 // Check if user has consented to AI features in their profile
@@ -106,9 +110,7 @@ function getDefaultProfile() {
     customAccent: "", customPeach: "",
     pinnedSections: ["expiring", "rotting", "pantry", "meals", "seasonal"],
     pinnedTiles: ["inventory", "shopping", "recipes", "reminders"],
-    points: 0,
     lastWeeklyAdd: null,
-    streak: 0,
     aiConsent: true
   };
 }
@@ -172,23 +174,6 @@ function applyCustomColors() {
   const p = getProfile();
   if (p.customAccent) document.documentElement.style.setProperty("--accent", p.customAccent);
   if (p.customPeach) document.documentElement.style.setProperty("--peach", p.customPeach);
-}
-
-// --- Points System ---
-
-// Add points to the user's profile and update the display
-function addPoints(amount, reason) {
-  const p = getProfile();
-  p.points = (p.points || 0) + amount;
-  saveProfile(p);
-  updatePointsDisplay();
-}
-
-function updatePointsDisplay() {
-  const el = document.getElementById("pointsDisplay");
-  if (el) el.textContent = getProfile().points || 0;
-  const el2 = document.getElementById("pointsTotal");
-  if (el2) el2.textContent = getProfile().points || 0;
 }
 
 // --- Date Helpers ---
@@ -585,7 +570,6 @@ function signup() {
   profile.passwordHash = hashPassword(password);
   profile.aiConsent = aiConsent;
   saveProfile(profile);
-  addPoints(POINTS_RULES.addFood, "Welcome bonus");
   window.location.href = "profile.html";
 }
 
@@ -719,7 +703,6 @@ function addFood() {
   var foods = getFoods();
   foods.push({ name: nameRaw, expiry: expiry, quantity: quantity, unit: unit, favourite: favourite, category: category, purchaseDate: purchaseDate, emoji: getFoodEmoji(nameRaw, category) });
   saveFoods(foods);
-  addPoints(POINTS_RULES.addFood, "Added " + nameRaw);
 
   // Clear the form
   document.getElementById("foodName").value = "";
@@ -749,15 +732,11 @@ function toggleFavourite(index) {
   loadStaples();
 }
 
-// Mark a food as used: remove it and award points
+// Mark a food as used: just remove it from the fridge
 function markUsed(index) {
   var foods = getFoods();
   var item = foods[index];
   if (!item) return;
-  var days = daysLeft(item.expiry);
-  // Award more points if used before expiry, fewer if expired
-  if (days >= 0) addPoints(POINTS_RULES.useBeforeExpiry, "Used " + item.name + " before expiry");
-  else addPoints(POINTS_RULES.preventWaste, "Removed expired " + item.name);
   foods.splice(index, 1);
   saveFoods(foods);
   showUsedFeedback(item.name);
@@ -876,7 +855,6 @@ function loadDashboard() {
   if (document.getElementById("expiryList") || document.getElementById("fridgeCarousel")) {
     loadHomeExpiry();
     loadFridgeCarousel();
-    updatePointsDisplay();
     return;
   }
   if (!document.getElementById("dashboardFood")) return;
@@ -885,7 +863,6 @@ function loadDashboard() {
   loadPantrySection();
   loadMealButtons();
   loadSeasonalTip();
-  updatePointsDisplay();
 }
 
 // --- Home Screen Renders ---
@@ -1592,10 +1569,9 @@ function addRecipeToShopping(recipeName) {
 }
 
 function markRecipeCooked(recipeName, btn) {
-  addPoints(POINTS_RULES.addRecipe, "Cooked " + recipeName);
   var card = btn && btn.closest ? btn.closest(".recipe-card") : null;
   if (!card) {
-    alert("Nice! +" + POINTS_RULES.addRecipe + " points for cooking.");
+    alert("Nice! You've marked " + recipeName + " as cooked.");
     return;
   }
   card.remove();
@@ -1612,14 +1588,16 @@ function markRecipeCooked(recipeName, btn) {
     seasonalContainer.innerHTML = "<p class=\"empty-state\">You've cooked everything here — nice! 🎉</p>";
   }
   
-  alert("Nice! +" + POINTS_RULES.addRecipe + " points for cooking " + recipeName + "!");
+  alert("Nice! You've marked " + recipeName + " as cooked.");
 }
 
 // --- Shopping Lists ---
 
 // Add a new item to a specific shopping list
 function addItemToList(listName) {
-  var input = document.getElementById(listName + "Input");
+  // List names can have spaces (e.g. "AI List") but ids cannot, so strip spaces first
+  var safeId = listName.replace(/\s+/g, "") + "Input";
+  var input = document.getElementById(safeId);
   if (!input) return;
   var name = input.value.trim();
   if (!name) return;
@@ -1657,6 +1635,19 @@ function clearList(listName) {
   var lists = getShoppingList();
   if (!lists[listName]) return;
   lists[listName] = [];
+  saveShoppingList(lists);
+  displayAllShoppingLists();
+}
+
+// Delete a whole list (remove it completely, not just clear the items)
+function deleteList(listName) {
+  var lists = getShoppingList();
+  if (!lists[listName]) return;
+
+  var sure = confirm("Delete the whole list \"" + listName + "\"? This removes it completely.");
+  if (!sure) return;
+
+  delete lists[listName];
   saveShoppingList(lists);
   displayAllShoppingLists();
 }
@@ -1714,7 +1705,6 @@ function addAllStaples() {
   for (i = 0; i < favourites.length; i++) {
     addItemToUserList(favourites[i].name);
   }
-  addPoints(10, "Added weekly staples");
 }
 
 function autoWeeklyStaples() {
@@ -1772,6 +1762,15 @@ function displayAllShoppingLists() {
     
     header.appendChild(title);
     header.appendChild(clearBtn);
+
+    var deleteBtn = document.createElement("button");
+    deleteBtn.className = "btn-small btn-danger";
+    deleteBtn.textContent = "Delete";
+    deleteBtn.onclick = (function(name) {
+      return function() { deleteList(name); };
+    })(listName);
+
+    header.appendChild(deleteBtn);
     
     var itemsDiv = document.createElement("div");
     itemsDiv.className = "shopping-items";
@@ -1964,8 +1963,6 @@ function loadRemindersPage() {
         // Remove item from foods
         foods.splice(itemId, 1);
         saveFoods(foods);
-        // Award points
-        addPoints(POINTS_RULES.useBeforeExpiry, "Used " + item.name);
         // Re-render reminders
         loadRemindersPage();
       }
@@ -2199,219 +2196,7 @@ document.addEventListener("DOMContentLoaded", function () {
   loadPriceCompare();
   showNotifBanner();
   checkReminders();
-  updatePointsDisplay();
 
   const purchaseDate = document.getElementById("purchaseDate");
   if (purchaseDate) purchaseDate.value = todayStr();
 });
-
-
-// --- Shopping List Page (old system, kept for compatibility) ---
-
-// Get a specific shopping list by name (old system)
-function getShoppingListByName(name) {
-  var stored = localStorage.getItem("shoppingList_" + name);
-  if (stored) {
-    try { return JSON.parse(stored); } catch (e) { return []; }
-  }
-  return [];
-}
-
-function saveShoppingListByName(name, list) {
-  localStorage.setItem("shoppingList_" + name, JSON.stringify(list));
-}
-
-function displayShoppingListItems(listId) {
-  console.log("displayShoppingListItems called with:", listId);
-  var container = document.getElementById(listId);
-  if (!container) return;
-  var list = getShoppingListByName(listId);
-  container.innerHTML = "";
-  if (list.length === 0) {
-    container.innerHTML = '<p class="empty-state">No items in this list.</p>';
-    return;
-  }
-  list.forEach(function(item, index) {
-    var row = document.createElement("div");
-    row.className = "shopping-item-row";
-    var checkbox = document.createElement("input");
-    checkbox.type = "checkbox";
-    checkbox.className = "shopping-item-checkbox";
-    checkbox.checked = item.checked || false;
-    checkbox.addEventListener("change", function() { toggleShoppingListItem(listId, index); });
-    var input = document.createElement("input");
-    input.type = "text";
-    input.className = "shopping-item-text";
-    input.value = item.name || "";
-    input.addEventListener("blur", function() { updateShoppingListItemName(listId, index, this.value); });
-    var deleteBtn = document.createElement("button");
-    deleteBtn.className = "btn-small btn-danger";
-    deleteBtn.textContent = "✕";
-    deleteBtn.style.marginLeft = "auto";
-    deleteBtn.style.flexShrink = "0";
-    deleteBtn.addEventListener("click", function() { removeShoppingListItem(listId, index); });
-    row.appendChild(checkbox);
-    row.appendChild(input);
-    row.appendChild(deleteBtn);
-    container.appendChild(row);
-  });
-}
-
-function toggleShoppingListItem(listId, index) {
-  var list = getShoppingListByName(listId);
-  if (list[index]) { list[index].checked = !list[index].checked; saveShoppingListByName(listId, list); displayShoppingListItems(listId); }
-}
-
-function updateShoppingListItemName(listId, index, newName) {
-  var list = getShoppingListByName(listId);
-  if (list[index] && newName.trim()) { list[index].name = newName.trim(); saveShoppingListByName(listId, list); } else if (!newName.trim()) { removeShoppingListItem(listId, index); }
-}
-
-function removeShoppingListItem(listId, index) {
-  var list = getShoppingListByName(listId);
-  list.splice(index, 1);
-  saveShoppingListByName(listId, list);
-  displayShoppingListItems(listId);
-}
-
-function addItemToList(listId) {
-  console.log("addItemToList called with:", listId);
-  var input = document.getElementById(listId + "Input");
-  if (!input) return;
-  var name = input.value.trim();
-  if (!name) return;
-  var list = getShoppingListByName(listId);
-  var exists = list.some(function(item) { return item.name.toLowerCase() === name.toLowerCase(); });
-  if (exists) { alert(name + " is already in the list."); return; }
-  list.push({ name: name, checked: false });
-  saveShoppingListByName(listId, list);
-  input.value = "";
-  displayShoppingListItems(listId);
-}
-
-function clearList(listId) {
-  if (!confirm("Clear all items from this list?")) return;
-  saveShoppingListByName(listId, []);
-  displayShoppingListItems(listId);
-}
-
-function initShoppingPage() {
-  console.log("initShoppingPage called");
-  var lists = ["aiList", "customList", "otherList1", "otherList2"];
-  lists.forEach(function(listId) {
-    displayShoppingListItems(listId);
-    var input = document.getElementById(listId + "Input");
-    if (input) { input.addEventListener("keypress", function(e) { if (e.key === "Enter") addItemToList(listId); }); }
-  });
-}
-
-if (document.querySelector(".shopping-lists-container")) {
-  if (document.readyState === "loading") { document.addEventListener("DOMContentLoaded", initShoppingPage); } else { initShoppingPage(); }
-
-// --- Seasonal Recipes & Favourites (old system, kept for compatibility) ---
-
-// List of seasonal recipes that are always shown (old system)
-var SEASONAL_RECIPES = [
-  { name: "Classic Margherita Pizza", description: "Crispy thin crust, tomato sauce, fresh mozzarella and basil. A crowd favourite.", time: "30 min", ingredientsUsed: ["flour", "tomatoes", "cheese"] },
-  { name: "Chicken Stir-Fry", description: "Quick chicken strips with mixed vegetables in a savoury soy-ginger sauce.", time: "20 min", ingredientsUsed: ["chicken", "vegetables", "soy sauce"] },
-  { name: "Creamy Mushroom Risotto", description: "Arborio rice slowly cooked with wild mushrooms, parmesan and white wine.", time: "40 min", ingredientsUsed: ["rice", "mushrooms", "cheese"] },
-  { name: "Thai Green Curry", description: "Fragrant green curry paste with coconut milk, vegetables and Thai basil.", time: "35 min", ingredientsUsed: ["coconut milk", "vegetables", "spices"] },
-];
-
-function getFavorites() {
-  try { return JSON.parse(localStorage.getItem("favoriteRecipes") || "[]"); } catch (e) { return []; }
-}
-
-function saveFavorites(list) { localStorage.setItem("favoriteRecipes", JSON.stringify(list)); }
-
-function toggleFavorite(recipe) {
-  var favs = getFavorites();
-  var idx = favs.findIndex(function (f) { return f.name === recipe.name; });
-  if (idx > -1) { favs.splice(idx, 1); } else { favs.push(recipe); }
-  saveFavorites(favs);
-  return idx === -1;
-}
-
-function renderSeasonalRecipes() {
-  var container = document.getElementById("seasonalList");
-  if (!container) return;
-  container.innerHTML = "";
-  SEASONAL_RECIPES.forEach(function (r, i) {
-    var card = document.createElement("article");
-    card.className = "recipe-card seasonal-card";
-    var img = getRecipeImage(r.name);
-    var searchQ = encodeURIComponent((r.name || "recipe").trim() + " recipe");
-    var link = "https://www.google.com/search?q=" + searchQ;
-    card.innerHTML =
-      '<div class="ai-card-inner">' +
-        '<div class="ai-card-body">' +
-          '<h4><a href="' + link + '" target="_blank" rel="noopener noreferrer">' + r.name + '</a></h4>' +
-          '<p>' + r.description + '</p>' +
-          '<p><small>' + (r.time || "") + ' &middot; ' + (r.ingredientsUsed || []).slice(0, 3).join(", ") + '</small></p>' +
-          '<div style="margin-top:10px;display:flex;gap:8px;align-items:center;">' +
-            '<a href="' + link + '" target="_blank" rel="noopener noreferrer" class="btn btn-small">View Recipe</a>' +
-            '<button class="ai-heart-btn" id="sh' + i + '">&#9825;</button>' +
-          '</div>' +
-        '</div>' +
-        '<div style="min-width:100px;"><img src="' + img + '" alt="' + r.name + '" style="width:100%;border-radius:12px;object-fit:cover;height:80px;" onerror="this.src=\&apos;\&apos; + getRecipeImage(\&apos;default\&apos;) + \&apos;\&apos;"></div>' +
-      '</div>' +
-      '<span class="ai-recipe-badge">Seasonal</span>';
-    container.appendChild(card);
-    var hb = document.getElementById("sh" + i);
-    if (hb) {
-      (function(idx, recipe) {
-        hb.addEventListener("click", function () {
-          var saved = toggleFavorite(recipe);
-          hb.innerHTML = saved ? "&#9829;" : "&#9825;";
-          hb.className = "ai-heart-btn" + (saved ? " saved" : "");
-        });
-      })(i, r);
-    }
-  });
-}
-
-function loadFavorites() {
-  var container = document.getElementById("favoritesList");
-  if (!container) return;
-  var favs = getFavorites();
-  container.innerHTML = "";
-  if (favs.length === 0) {
-    container.innerHTML = '<p class="empty-state">No favourites saved yet! Click the heart on any recipe to save it here.</p>';
-    return;
-  }
-  favs.forEach(function (r, i) {
-    var card = document.createElement("article");
-    card.className = "recipe-card seasonal-card";
-    var img = getRecipeImage(r.name);
-    var searchQ = encodeURIComponent((r.name || "recipe").trim() + " recipe");
-    var link = "https://www.google.com/search?q=" + searchQ;
-    card.innerHTML =
-      '<div class="ai-card-inner">' +
-        '<div class="ai-card-body">' +
-          '<h4><a href="' + link + '" target="_blank" rel="noopener noreferrer">' + r.name + '</a></h4>' +
-          '<p>' + (r.description || "") + '</p>' +
-          '<p><small>' + (r.time || "") + '</small></p>' +
-          '<div style="margin-top:10px;display:flex;gap:8px;align-items:center;">' +
-            '<a href="' + link + '" target="_blank" rel="noopener noreferrer" class="btn btn-small">View Recipe</a>' +
-            '<button class="ai-heart-btn saved" id="fh' + i + '">&#9829;</button>' +
-          '</div>' +
-        '</div>' +
-        '<div style="min-width:100px;"><img src="' + img + '" alt="' + r.name + '" style="width:100%;border-radius:12px;object-fit:cover;height:80px;" onerror="this.src=\&apos;\&apos; + getRecipeImage(\&apos;default\&apos;) + \&apos;\&apos;"></div>' +
-      '</div>' +
-      '<span class="ai-recipe-badge">Saved</span>';
-    container.appendChild(card);
-    var hb = document.getElementById("fh" + i);
-    if (hb) {
-      (function(idx) {
-        hb.addEventListener("click", function () {
-          var f2 = getFavorites();
-          f2.splice(idx, 1);
-          saveFavorites(f2);
-          loadFavorites();
-        });
-      })(i);
-    }
-  });
-}
-
-}

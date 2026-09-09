@@ -88,15 +88,6 @@ const AU_REGIONS = [
   "NSW", "VIC", "QLD", "WA", "SA", "TAS", "ACT", "NT"
 ];
 
-const POINTS_RULES = {
-  addFood: 5,
-  useBeforeExpiry: 20,
-  scanReceipt: 15,
-  addRecipe: 10,
-  weeklyStreak: 50,
-  preventWaste: 25
-};
-
 const DASHBOARD_SECTIONS = [
   { id: "expiring", label: "Use First", icon: "⚠️" },
   { id: "rotting", label: "Rotting Alert", icon: "R" },
