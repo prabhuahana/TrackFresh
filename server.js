@@ -1,17 +1,5 @@
-// server.js - backend for FreshTrack
+// server.js - backend for TrackFresh
 // handles AI recipe requests and serves the static HTML/CSS/JS files
-
-/*
-====================================================================
-HOW THE SERVER WORKS - EXAM PSEUDOCODE:
-====================================================================
-1. LOAD environment variables from .env file
-2. CREATE HTTP server to handle incoming requests
-3. ROUTE "/api/recipes" to AI recipe generation
-4. ROUTE "/api/prices" to price comparison via Python script
-5. ROUTE "everything else" to static files
-====================================================================
-*/
 
 import http from "node:http";
 import { spawn } from "node:child_process";

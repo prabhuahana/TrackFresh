@@ -2,41 +2,16 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>FreshTrack — Reminders</title>
+  <title>TrackFresh — Reminders</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <button class="theme-toggle theme-toggle-float" onclick="toggleTheme()" aria-label="Toggle dark mode">Dark mode</button>
-<!--
 
-================================================================================
-PSEUDOCODE (EXAM STYLE) - REMINDERS PAGE
-================================================================================
-DISPLAY "Priority Order" header
-CALL getFoods() to fetch all food items
-FOR each food item DO
-    SET daysUntilExpiry = expiryDate - today
-    IF daysUntilExpiry < 0 THEN
-        SET priority = "Critical"
-    ELSEIF daysUntilExpiry <= 2 THEN
-        SET priority = "High"
-    ELSEIF daysUntilExpiry <= 7 THEN
-        SET priority = "Medium"
-    ELSE
-        SET priority = "Low"
-    ENDIF
-ENDFOR
-SORT items by daysUntilExpiry ascending
-FOR each food item DO
-    DISPLAY item with priority badge
-ENDFOR
-================================================================================
-
--->
 <div class="layout">
 <aside>
-  <h1>FreshTrack</h1>
+  <h1>TrackFresh</h1>
   <nav>
     <a href="dashboard.html" class="nav-icon-home"><img src="Button_HomePage_Dark.png" alt="" class="nav-img-dark"><img src="Button_HomePage_Light.png" alt="" class="nav-img-light">Home</a>
     <a href="reminders.html" class="nav-icon-reminders"><img src="Button_ExpiryDates_Dark.png" alt="" class="nav-img-dark"><img src="Button_ExpiryDates_Light.png" alt="" class="nav-img-light">Reminders</a>
@@ -51,7 +26,7 @@ ENDFOR
 </aside>
 <main>
 <div class="topbar">
-  <a class="brand" href="dashboard.html" aria-label="FreshTrack home">
+  <a class="brand" href="dashboard.html" aria-label="TrackFresh home">
     <img src="Logo_Light.png" alt="TrackFresh" class="brand-logo brand-logo-light">
     <img src="Logo_Dark.png" alt="TrackFresh" class="brand-logo brand-logo-dark">
   </a>

@@ -1,20 +1,4 @@
-// data.js - all the constant data and lookup tables for FreshTrack
-
-/*
-====================================================================
-PSEUDOCODE - WHAT THIS FILE HOLDS:
-====================================================================
-DISPLAY food emoji codes (FOOD_EMOJIS)
-DISPLAY food category list (CATEGORIES)
-DISPLAY shelf life data in days (SHELF_LIFE)
-DISPLAY pre-made recipe templates (RECIPES)
-DISPLAY grocery price data (PRICE_DATA)
-DISPLAY weekly specials from supermarkets (BROCHURES)
-DISPLAY Australian states (AU_REGIONS)
-DISPLAY points rules for gamification (POINTS_RULES)
-DISPLAY dashboard section configs (DASHBOARD_SECTIONS)
-====================================================================
-*/
+// data.js - all the constant data and lookup tables for TrackFresh
 
 // food emoji codes - each item gets a short letter badge
 const FOOD_EMOJIS = {
